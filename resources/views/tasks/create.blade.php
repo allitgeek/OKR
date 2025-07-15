@@ -25,9 +25,9 @@
                         </div>
 
                         <div>
-                            <x-input-label for="key_result_id" :value="__('Key Result')" />
-                            <select id="key_result_id" name="key_result_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
-                                <option value="">Select a Key Result</option>
+                            <x-input-label for="key_result_id" :value="__('Key Result (Optional)')" />
+                            <select id="key_result_id" name="key_result_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                <option value="">Select a Key Result (Optional)</option>
                                 @foreach($keyResults as $keyResult)
                                     <option value="{{ $keyResult->id }}" {{ old('key_result_id') == $keyResult->id ? 'selected' : '' }}>
                                         {{ $keyResult->objective->title }} - {{ $keyResult->title }}
