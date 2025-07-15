@@ -90,6 +90,10 @@ class Objective extends Model
         try {
             if ($this->keyResults()->count() > 0) {
                 $totalProgress = $this->keyResults->sum(function ($keyResult) {
+                    if ($keyResult->target_value == 0) {
+                        // For zero targets, if current value is also 0, it's 100% complete
+                        return $keyResult->current_value == 0 ? 100 : 0;
+                    }
                     return ($keyResult->current_value / $keyResult->target_value) * 100;
                 });
                 $this->progress = round($totalProgress / $this->keyResults()->count());
@@ -114,6 +118,10 @@ class Objective extends Model
         try {
             if ($this->keyResults()->count() > 0) {
                 $totalProgress = $this->keyResults->sum(function ($keyResult) {
+                    if ($keyResult->target_value == 0) {
+                        // For zero targets, if current value is also 0, it's 100% complete
+                        return $keyResult->current_value == 0 ? 100 : 0;
+                    }
                     return ($keyResult->current_value / $keyResult->target_value) * 100;
                 });
                 $this->progress = round($totalProgress / $this->keyResults()->count());

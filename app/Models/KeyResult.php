@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 
 class KeyResult extends Model
 {
@@ -58,7 +59,8 @@ class KeyResult extends Model
     public function calculateProgress(): void
     {
         if ($this->target_value == 0) {
-            $this->progress = 0;
+            // For zero targets, if current value is also 0, it's 100% complete
+            $this->progress = $this->current_value == 0 ? 100 : 0;
         } else {
             $this->progress = (int) round(($this->current_value / $this->target_value) * 100);
             // Ensure progress stays within bounds
@@ -72,7 +74,8 @@ class KeyResult extends Model
     public function calculateProgressWithoutEvents(): void
     {
         if ($this->target_value == 0) {
-            $this->progress = 0;
+            // For zero targets, if current value is also 0, it's 100% complete
+            $this->progress = $this->current_value == 0 ? 100 : 0;
         } else {
             $this->progress = (int) round(($this->current_value / $this->target_value) * 100);
             // Ensure progress stays within bounds
@@ -80,7 +83,7 @@ class KeyResult extends Model
         }
 
         // Use a transaction to prevent any potential race conditions
-        \DB::transaction(function () {
+        DB::transaction(function () {
             $this->saveQuietly();
         });
     }

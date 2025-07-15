@@ -6,6 +6,7 @@ use App\Http\Controllers\ObjectiveController;
 use App\Http\Controllers\KeyResultController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\UserPermissionController;
+use App\Http\Controllers\AnalyticsController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -49,6 +50,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/users/permissions', [UserPermissionController::class, 'index'])->name('users.permissions.index');
     Route::put('/users/{user}/permissions', [UserPermissionController::class, 'update'])->name('users.permissions.update');
     Route::post('/users/{user}/super-admin', [UserPermissionController::class, 'assignSuperAdmin'])->name('users.permissions.super-admin');
+    
+    // Analytics (Super Admin Only)
+    Route::prefix('analytics')->name('analytics.')->middleware('can:view-analytics')->group(function () {
+        Route::get('/dashboard', [AnalyticsController::class, 'dashboard'])->name('dashboard');
+        Route::get('/reports', [AnalyticsController::class, 'reports'])->name('reports');
+        Route::get('/team-performance', [AnalyticsController::class, 'teamPerformance'])->name('team-performance');
+        Route::get('/insights', [AnalyticsController::class, 'insights'])->name('insights');
+    });
 });
 
 Route::middleware('auth')->group(function () {

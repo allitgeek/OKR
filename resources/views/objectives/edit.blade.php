@@ -106,8 +106,13 @@
                         <div class="mt-6 space-y-4">
                             @foreach($objective->keyResults as $keyResult)
                                 @php
-                                    $isComplete = $keyResult->current_value >= $keyResult->target_value;
-                                    $progressPercent = ($keyResult->current_value / $keyResult->target_value) * 100;
+                                    if ($keyResult->target_value == 0) {
+                                        $progressPercent = $keyResult->current_value == 0 ? 100 : 0;
+                                    } else {
+                                        $progressPercent = ($keyResult->current_value / $keyResult->target_value) * 100;
+                                    }
+                                    $progressPercent = max(0, min(100, $progressPercent));
+                                    $isComplete = $progressPercent >= 100;
                                     $progressColor = $isComplete ? 'bg-green-600' : 'bg-blue-600';
                                 @endphp
                                 <div class="bg-gray-50 p-4 rounded-lg" data-kr-due-date="{{ $keyResult->due_date?->format('Y-m-d') }}">

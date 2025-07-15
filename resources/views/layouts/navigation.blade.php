@@ -26,6 +26,11 @@
                     <x-nav-link :href="route('tasks.index')" :active="request()->routeIs('tasks.*')" class="text-gray-300 hover:text-white">
                         {{ __('Tasks') }}
                     </x-nav-link>
+                    @can('view-analytics')
+                    <x-nav-link :href="route('analytics.dashboard')" :active="request()->routeIs('analytics.*')" class="text-gray-300 hover:text-white">
+                        {{ __('Analytics') }}
+                    </x-nav-link>
+                    @endcan
                     @can('manage-users')
                     <x-nav-link :href="route('users.permissions.index')" :active="request()->routeIs('users.permissions.*')" class="text-gray-300 hover:text-white">
                         {{ __('Users') }}
@@ -92,6 +97,11 @@
             <x-responsive-nav-link :href="route('tasks.index')" :active="request()->routeIs('tasks.*')" class="text-gray-300 hover:text-white">
                 {{ __('Tasks') }}
             </x-responsive-nav-link>
+            @can('view-analytics')
+            <x-responsive-nav-link :href="route('analytics.dashboard')" :active="request()->routeIs('analytics.*')" class="text-gray-300 hover:text-white">
+                {{ __('Analytics') }}
+            </x-responsive-nav-link>
+            @endcan
             @can('manage-users')
             <x-responsive-nav-link :href="route('users.permissions.index')" :active="request()->routeIs('users.permissions.*')" class="text-gray-300 hover:text-white">
                 {{ __('Users') }}
