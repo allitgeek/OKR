@@ -1,23 +1,63 @@
+@php
+    use Illuminate\Support\Str;
+    
+    // Helper function to get due date color based on time remaining
+    function getDueDateColor($endDate) {
+        if (!$endDate) return 'text-gray-600';
+        
+        $now = now();
+        $totalDuration = $endDate->diffInHours($endDate->copy()->subMonths(1)); // Assume 1 month period as default
+        $remainingHours = $now->diffInHours($endDate, false);
+        
+        // If overdue
+        if ($remainingHours < 0) {
+            return 'text-red-600 font-semibold';
+        }
+        
+        // If 48 hours or less remaining
+        if ($remainingHours <= 48) {
+            return 'text-red-500 font-medium';
+        }
+        
+        // If 50% or more time has passed
+        $timePassedPercentage = (($totalDuration - $remainingHours) / $totalDuration) * 100;
+        if ($timePassedPercentage >= 50) {
+            return 'text-orange-500 font-medium';
+        }
+        
+        // Default blue
+        return 'text-blue-600';
+    }
+    
+    // Helper function to truncate description
+    function truncateDescription($description, $length = 150) {
+        return Str::length($description) > $length ? Str::limit($description, $length, '...') : $description;
+    }
+@endphp
+
 <x-app-layout>
     <x-slot name="header">
         <div class="flex justify-between items-center">
-            <h2 class="text-2xl font-bold text-gray-800 leading-tight">
+            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ __('Objectives') }}
             </h2>
-            <a href="{{ route('objectives.create') }}" class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors duration-150 ease-in-out">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            <a href="{{ route('objectives.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 inline-flex items-center">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                 </svg>
-                {{ __('New Objective') }}
+                New Objective
             </a>
         </div>
     </x-slot>
 
-    <div class="py-6">
+    <!-- Add Sortable.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+
+    <div class="py-8">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div id="objectives-container" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 @forelse($objectives as $objective)
-                    <div class="bg-white overflow-hidden shadow-sm rounded-lg hover:shadow-md transition-shadow duration-200">
+                    <div class="objective-card bg-white overflow-hidden shadow-sm rounded-lg hover:shadow-md transition-shadow duration-200" data-id="{{ $objective->id }}">
                         <div class="p-6">
                             <div class="flex items-center justify-between mb-4">
                                 <div class="flex items-center">
@@ -30,22 +70,23 @@
                                         </a>
                                     </h3>
                                 </div>
-                                <div class="flex items-center space-x-2">
-                                    <a href="{{ route('objectives.edit', $objective) }}" class="text-gray-400 hover:text-blue-600 transition-colors duration-150">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                                        </svg>
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium {{ $objective->progress >= 100 ? 'bg-green-100 text-green-800' : ($objective->progress >= 50 ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800') }}">
+                                    {{ $objective->progress }}%
+                                </span>
+                            </div>
+
+                            <!-- Description with Read More -->
+                            <div class="mb-4">
+                                @php
+                                    $truncatedDesc = truncateDescription($objective->description, 120);
+                                    $needsReadMore = Str::length($objective->description) > 120;
+                                @endphp
+                                <p class="text-gray-600 text-sm">{{ $truncatedDesc }}</p>
+                                @if($needsReadMore)
+                                    <a href="{{ route('objectives.show', $objective) }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors duration-200">
+                                        Read more →
                                     </a>
-                                    <form action="{{ route('objectives.destroy', $objective) }}" method="POST" class="inline">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="text-gray-400 hover:text-red-600 transition-colors duration-150" onclick="return confirm('Are you sure you want to delete this objective?')">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                            </svg>
-                                        </button>
-                                    </form>
-                                </div>
+                                @endif
                             </div>
 
                             <div class="mb-4">
@@ -53,25 +94,37 @@
                                     <span>Overall Progress</span>
                                     <span class="font-medium">{{ $objective->progress }}%</span>
                                 </div>
-                                <div class="w-full bg-gray-200 rounded-full h-2">
-                                    <div class="h-2 rounded-full transition-all duration-300 ease-in-out {{ $objective->progress >= 100 ? 'bg-green-500' : ($objective->progress >= 50 ? 'bg-blue-500' : 'bg-blue-500') }}" 
+                                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                    <div class="h-2.5 rounded-full transition-all duration-300 ease-in-out {{ $objective->progress >= 100 ? 'bg-green-500' : ($objective->progress >= 50 ? 'bg-blue-500' : 'bg-blue-500') }}" 
                                          style="width: {{ $objective->progress }}%">
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="space-y-3">
-                                <div class="flex justify-between text-sm">
-                                    <span class="text-gray-600">Key Results</span>
-                                    <span class="font-medium text-gray-900">{{ $objective->keyResults->count() }}</span>
+                            <!-- KR Statistics -->
+                            <div class="mb-4 grid grid-cols-3 gap-2 text-xs text-gray-600">
+                                <div class="bg-gray-50 rounded-lg p-2.5 text-center">
+                                    <div class="font-semibold text-gray-900">{{ $objective->keyResults->count() }}</div>
+                                    <div>Total KR</div>
                                 </div>
+                                <div class="bg-green-50 rounded-lg p-2.5 text-center">
+                                    <div class="font-semibold text-green-700">{{ $objective->keyResults->where('progress', '>=', 100)->count() }}</div>
+                                    <div class="text-green-600">Completed KR</div>
+                                </div>
+                                <div class="bg-yellow-50 rounded-lg p-2.5 text-center">
+                                    <div class="font-semibold text-yellow-700">{{ $objective->keyResults->where('progress', '<', 100)->count() }}</div>
+                                    <div class="text-yellow-600">Pending KR</div>
+                                </div>
+                            </div>
+
+                            <div class="space-y-3">
                                 <div class="flex justify-between text-sm">
                                     <span class="text-gray-600">Time Period</span>
                                     <span class="font-medium text-gray-900">{{ ucfirst($objective->time_period) }}</span>
                                 </div>
                                 <div class="flex justify-between text-sm">
                                     <span class="text-gray-600">Due Date</span>
-                                    <span class="font-medium {{ $objective->end_date->isPast() ? 'text-red-600' : 'text-gray-900' }}">
+                                    <span class="font-medium {{ getDueDateColor($objective->end_date) }}">
                                         {{ $objective->end_date->format('M d, Y') }}
                                     </span>
                                 </div>
@@ -90,25 +143,118 @@
                     </div>
                 @empty
                     <div class="col-span-full">
-                        <div class="bg-white rounded-lg shadow-sm p-6 text-center">
-                            <div class="text-gray-500 mb-4">No objectives found</div>
-                            <a href="{{ route('objectives.create') }}" 
-                               class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors duration-150 ease-in-out">
-                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                                </svg>
-                                Create Your First Objective
+                        <div class="text-center py-12 bg-white rounded-lg shadow-sm">
+                            <svg class="mx-auto h-16 w-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                            </svg>
+                            <h3 class="text-lg font-medium text-gray-900 mb-2">No Objectives Yet</h3>
+                            <p class="text-gray-600 mb-6">Get started by creating your first objective.</p>
+                            <a href="{{ route('objectives.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105">
+                                Create Objective
                             </a>
                         </div>
                     </div>
                 @endforelse
             </div>
-
-            @if($objectives->hasPages())
-                <div class="mt-6">
-                    {{ $objectives->links() }}
-                </div>
-            @endif
         </div>
     </div>
+
+    <style>
+        /* Drag and drop styles */
+        .sortable-ghost {
+            opacity: 0.4;
+        }
+        .sortable-chosen {
+            cursor: grabbing;
+        }
+        .objective-card {
+            cursor: grab;
+        }
+        .objective-card:hover {
+            cursor: grab;
+        }
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize sortable for objectives
+            const objectivesContainer = document.getElementById('objectives-container');
+            if (objectivesContainer) {
+                new Sortable(objectivesContainer, {
+                    animation: 150,
+                    ghostClass: 'sortable-ghost',
+                    chosenClass: 'sortable-chosen',
+                    onEnd: function(evt) {
+                        // Save the new order to localStorage
+                        const objectiveIds = Array.from(objectivesContainer.children).map(el => el.dataset.id);
+                        localStorage.setItem('objectives_page_order', JSON.stringify(objectiveIds));
+                        
+                        // Show success message
+                        showNotification('Objectives reordered successfully!', 'success');
+                    }
+                });
+
+                // Restore order from localStorage
+                const savedOrder = localStorage.getItem('objectives_page_order');
+                if (savedOrder) {
+                    try {
+                        const order = JSON.parse(savedOrder);
+                        restoreOrder(objectivesContainer, order);
+                    } catch (e) {
+                        console.warn('Could not restore objectives order:', e);
+                    }
+                }
+            }
+
+            // Helper function to restore order
+            function restoreOrder(container, order) {
+                const items = Array.from(container.children);
+                const orderedItems = [];
+                
+                // First, add items in the saved order
+                order.forEach(id => {
+                    const item = items.find(el => el.dataset.id === id);
+                    if (item) {
+                        orderedItems.push(item);
+                    }
+                });
+                
+                // Then add any items not in the saved order
+                items.forEach(item => {
+                    if (!orderedItems.includes(item)) {
+                        orderedItems.push(item);
+                    }
+                });
+                
+                // Reorder the DOM
+                orderedItems.forEach(item => {
+                    container.appendChild(item);
+                });
+            }
+
+            // Helper function to show notifications
+            function showNotification(message, type = 'success') {
+                const notification = document.createElement('div');
+                notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg text-white z-50 transform transition-all duration-300 ${
+                    type === 'success' ? 'bg-green-500' : 'bg-red-500'
+                }`;
+                notification.textContent = message;
+                
+                document.body.appendChild(notification);
+                
+                // Animate in
+                setTimeout(() => {
+                    notification.style.transform = 'translateX(0)';
+                }, 100);
+                
+                // Remove after 3 seconds
+                setTimeout(() => {
+                    notification.style.transform = 'translateX(100%)';
+                    setTimeout(() => {
+                        document.body.removeChild(notification);
+                    }, 300);
+                }, 3000);
+            }
+        });
+    </script>
 </x-app-layout> 

@@ -51,12 +51,7 @@
                             </div>
 
                             <div>
-                                <x-input-label for="user_search" :value="__('Search Assignee')" />
-                                <input type="text" id="user_search" 
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                    placeholder="Type to search users...">
-
-                                <x-input-label for="owner_id" :value="__('Assign To')" class="mt-2" />
+                                <x-input-label for="owner_id" :value="__('Assign To')" />
                                 <select id="owner_id" name="owner_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
                                     @foreach($users as $user)
                                         <option value="{{ $user->id }}" {{ $user->id === auth()->id() ? 'selected' : '' }}>
@@ -157,20 +152,6 @@
     @push('scripts')
     <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Handle user search
-        const userSearch = document.getElementById('user_search');
-        const userSelect = document.getElementById('owner_id');
-        
-        if (userSearch && userSelect) {
-            userSearch.addEventListener('input', function(e) {
-                const searchValue = e.target.value.toLowerCase();
-                Array.from(userSelect.options).forEach(option => {
-                    const matches = option.text.toLowerCase().includes(searchValue);
-                    option.style.display = matches ? '' : 'none';
-                });
-            });
-        }
-
         // Handle quick value buttons
         const currentValueInput = document.getElementById('current_value');
         const targetValueInput = document.getElementById('target_value');

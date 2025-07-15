@@ -1,3 +1,40 @@
+@php
+    use Illuminate\Support\Str;
+    
+    // Helper function to get due date color based on time remaining
+    function getDueDateColor($endDate) {
+        if (!$endDate) return 'text-gray-600';
+        
+        $now = now();
+        $totalDuration = $endDate->diffInHours($endDate->copy()->subMonths(1)); // Assume 1 month period as default
+        $remainingHours = $now->diffInHours($endDate, false);
+        
+        // If overdue
+        if ($remainingHours < 0) {
+            return 'text-red-600 font-semibold';
+        }
+        
+        // If 48 hours or less remaining
+        if ($remainingHours <= 48) {
+            return 'text-red-500 font-medium';
+        }
+        
+        // If 50% or more time has passed
+        $timePassedPercentage = (($totalDuration - $remainingHours) / $totalDuration) * 100;
+        if ($timePassedPercentage >= 50) {
+            return 'text-orange-500 font-medium';
+        }
+        
+        // Default blue
+        return 'text-blue-600';
+    }
+    
+    // Helper function to truncate description
+    function truncateDescription($description, $length = 120) {
+        return Str::length($description) > $length ? Str::limit($description, $length, '...') : $description;
+    }
+@endphp
+
 <x-app-layout>
     <x-slot name="header">
         <div class="flex justify-between items-center">
@@ -9,6 +46,9 @@
             </a>
         </div>
     </x-slot>
+
+    <!-- Add Sortable.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 
     <div class="py-8">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
@@ -33,9 +73,9 @@
             </div>
 
             <!-- Tasks Grid -->
-            <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div id="tasks-container" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 @forelse($tasks as $task)
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-lg transition-shadow duration-300">
+                    <div class="task-card bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-lg transition-shadow duration-300" data-id="{{ $task->id }}">
                         <!-- Task Header -->
                         <div class="p-6 pb-4">
                             <div class="flex justify-between items-start mb-3">
@@ -53,18 +93,30 @@
                                 </span>
                             </div>
                             
-                            <p class="text-gray-600 text-sm line-clamp-3 mb-4">{{ $task->description }}</p>
+                            <!-- Description with Read More -->
+                            <div class="mb-4">
+                                @php
+                                    $truncatedDesc = truncateDescription($task->description, 120);
+                                    $needsReadMore = Str::length($task->description) > 120;
+                                @endphp
+                                <p class="text-gray-600 text-sm">{{ $truncatedDesc }}</p>
+                                @if($needsReadMore)
+                                    <a href="{{ route('tasks.show', $task) }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors duration-200">
+                                        Read more →
+                                    </a>
+                                @endif
+                            </div>
                         </div>
 
                         <!-- Task Metadata -->
                         <div class="px-6 py-4 bg-gray-50 rounded-b-xl">
                             <div class="space-y-2 text-sm">
                                 <!-- Due Date -->
-                                <div class="flex items-center text-gray-600">
+                                <div class="flex items-center">
                                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                                     </svg>
-                                    <span>{{ $task->due_date?->format('M d, Y') ?? 'No due date' }}</span>
+                                    <span class="{{ getDueDateColor($task->due_date) }}">{{ $task->due_date?->format('M d, Y') ?? 'No due date' }}</span>
                                 </div>
 
                                 <!-- Assignee -->
@@ -170,5 +222,102 @@
             -webkit-box-orient: vertical;
             -webkit-line-clamp: 3;
         }
+
+        /* Drag and drop styles */
+        .sortable-ghost {
+            opacity: 0.4;
+        }
+        .sortable-chosen {
+            cursor: grabbing;
+        }
+        .task-card {
+            cursor: grab;
+        }
+        .task-card:hover {
+            cursor: grab;
+        }
     </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize sortable for tasks
+            const tasksContainer = document.getElementById('tasks-container');
+            if (tasksContainer) {
+                new Sortable(tasksContainer, {
+                    animation: 150,
+                    ghostClass: 'sortable-ghost',
+                    chosenClass: 'sortable-chosen',
+                    onEnd: function(evt) {
+                        // Save the new order to localStorage
+                        const taskIds = Array.from(tasksContainer.children).map(el => el.dataset.id);
+                        localStorage.setItem('tasks_page_order', JSON.stringify(taskIds));
+                        
+                        // Show success message
+                        showNotification('Tasks reordered successfully!', 'success');
+                    }
+                });
+
+                // Restore order from localStorage
+                const savedOrder = localStorage.getItem('tasks_page_order');
+                if (savedOrder) {
+                    try {
+                        const order = JSON.parse(savedOrder);
+                        restoreOrder(tasksContainer, order);
+                    } catch (e) {
+                        console.warn('Could not restore tasks order:', e);
+                    }
+                }
+            }
+
+            // Helper function to restore order
+            function restoreOrder(container, order) {
+                const items = Array.from(container.children);
+                const orderedItems = [];
+                
+                // First, add items in the saved order
+                order.forEach(id => {
+                    const item = items.find(el => el.dataset.id === id);
+                    if (item) {
+                        orderedItems.push(item);
+                    }
+                });
+                
+                // Then add any items not in the saved order
+                items.forEach(item => {
+                    if (!orderedItems.includes(item)) {
+                        orderedItems.push(item);
+                    }
+                });
+                
+                // Reorder the DOM
+                orderedItems.forEach(item => {
+                    container.appendChild(item);
+                });
+            }
+
+            // Helper function to show notifications
+            function showNotification(message, type = 'success') {
+                const notification = document.createElement('div');
+                notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg text-white z-50 transform transition-all duration-300 ${
+                    type === 'success' ? 'bg-green-500' : 'bg-red-500'
+                }`;
+                notification.textContent = message;
+                
+                document.body.appendChild(notification);
+                
+                // Animate in
+                setTimeout(() => {
+                    notification.style.transform = 'translateX(0)';
+                }, 100);
+                
+                // Remove after 3 seconds
+                setTimeout(() => {
+                    notification.style.transform = 'translateX(100%)';
+                    setTimeout(() => {
+                        document.body.removeChild(notification);
+                    }, 300);
+                }, 3000);
+            }
+        });
+    </script>
 </x-app-layout> 
