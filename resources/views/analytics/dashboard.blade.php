@@ -293,25 +293,51 @@
                     
                 } catch (error) {
                     console.error('Failed to load dashboard data:', error);
-                    this.showError('Failed to load analytics data');
+                    this.showError(`Failed to load analytics data: ${error.message}`);
+                    
+                    // Show debug info on page
+                    const debugDiv = document.createElement('div');
+                    debugDiv.innerHTML = `
+                        <div style="background: #fee; border: 1px solid #fcc; padding: 10px; margin: 10px; border-radius: 5px;">
+                            <strong>Debug Info:</strong><br>
+                            Error: ${error.message}<br>
+                            CSRF Token: ${document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 'MISSING'}<br>
+                            User Agent: ${navigator.userAgent}<br>
+                            URL: ${window.location.href}
+                        </div>
+                    `;
+                    document.querySelector('.min-h-screen').prepend(debugDiv);
                 } finally {
                     this.showLoading(false);
                 }
             }
 
             async fetchAPI(endpoint) {
+                console.log('Fetching:', endpoint);
+                
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                console.log('CSRF Token:', csrfToken ? 'Found' : 'MISSING');
+                
                 const response = await fetch(endpoint, {
                     headers: {
-                        'Authorization': `Bearer ${document.querySelector('meta[name="csrf-token"]').getAttribute('content')}`,
+                        'X-CSRF-TOKEN': csrfToken || '',
                         'Accept': 'application/json',
-                    }
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'same-origin'
                 });
                 
+                console.log('Response status:', response.status);
+                console.log('Response ok:', response.ok);
+                
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    const errorText = await response.text();
+                    console.error('Response error text:', errorText);
+                    throw new Error(`HTTP error! status: ${response.status} - ${errorText.substring(0, 100)}`);
                 }
                 
                 const data = await response.json();
+                console.log('Response data:', data);
                 return data.data;
             }
 
@@ -704,8 +730,24 @@
             }
 
             showError(message) {
-                // You can implement a toast notification system here
                 console.error(message);
+                
+                // Create and display error message
+                const errorDiv = document.createElement('div');
+                errorDiv.innerHTML = `
+                    <div style="position: fixed; top: 20px; right: 20px; background: #fee; border: 1px solid #fcc; padding: 15px; border-radius: 5px; color: #c33; z-index: 10000; max-width: 400px;">
+                        <strong>❌ Error:</strong> ${message}
+                        <button onclick="this.parentElement.parentElement.remove()" style="float: right; background: none; border: none; font-size: 18px; cursor: pointer; margin-left: 10px;">×</button>
+                    </div>
+                `;
+                document.body.appendChild(errorDiv);
+                
+                // Auto-remove after 10 seconds
+                setTimeout(() => {
+                    if (errorDiv.parentElement) {
+                        errorDiv.remove();
+                    }
+                }, 10000);
             }
 
             async exportData(format = 'json') {

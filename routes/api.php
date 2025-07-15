@@ -29,17 +29,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('tasks/{task}/accept', [TaskController::class, 'accept']);
     Route::post('tasks/{task}/reject', [TaskController::class, 'reject']);
     Route::post('tasks/{task}/complete', [TaskController::class, 'complete']);
-    
-    // Analytics (Super Admin Only)
-    Route::prefix('analytics')->middleware('can:view-analytics')->group(function () {
-        Route::get('dashboard', [AnalyticsController::class, 'dashboard']);
-        Route::get('success-rates', [AnalyticsController::class, 'successRates']);
-        Route::get('team-performance', [AnalyticsController::class, 'teamPerformance']);
-        Route::get('predictive-insights', [AnalyticsController::class, 'predictiveInsights']);
-        Route::get('trends', [AnalyticsController::class, 'trends']);
-        Route::post('custom-report', [AnalyticsController::class, 'customReport']);
-        Route::get('performance-comparison', [AnalyticsController::class, 'performanceComparison']);
-        Route::post('export', [AnalyticsController::class, 'export'])->middleware('can:export-analytics');
-        Route::get('alerts', [AnalyticsController::class, 'alerts']);
-    });
-}); 
+});
+
+ 

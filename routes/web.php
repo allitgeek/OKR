@@ -58,6 +58,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/team-performance', [AnalyticsController::class, 'teamPerformance'])->name('team-performance');
         Route::get('/insights', [AnalyticsController::class, 'insights'])->name('insights');
     });
+    
+    // Analytics API endpoints (for AJAX calls)
+    Route::prefix('api/analytics')->middleware('can:view-analytics')->group(function () {
+        Route::get('dashboard', [App\Http\Controllers\Api\AnalyticsController::class, 'dashboard']);
+        Route::get('success-rates', [App\Http\Controllers\Api\AnalyticsController::class, 'successRates']);
+        Route::get('team-performance', [App\Http\Controllers\Api\AnalyticsController::class, 'teamPerformance']);
+        Route::get('predictive-insights', [App\Http\Controllers\Api\AnalyticsController::class, 'predictiveInsights']);
+        Route::get('trends', [App\Http\Controllers\Api\AnalyticsController::class, 'trends']);
+        Route::post('custom-report', [App\Http\Controllers\Api\AnalyticsController::class, 'customReport']);
+        Route::get('performance-comparison', [App\Http\Controllers\Api\AnalyticsController::class, 'performanceComparison']);
+        Route::post('export', [App\Http\Controllers\Api\AnalyticsController::class, 'export'])->middleware('can:export-analytics');
+        Route::get('alerts', [App\Http\Controllers\Api\AnalyticsController::class, 'alerts']);
+    });
 });
 
 Route::middleware('auth')->group(function () {

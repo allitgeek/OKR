@@ -17,7 +17,6 @@ class AnalyticsController extends Controller
     public function __construct(AnalyticsService $analyticsService)
     {
         $this->analyticsService = $analyticsService;
-        $this->middleware('auth:sanctum');
     }
 
     /**

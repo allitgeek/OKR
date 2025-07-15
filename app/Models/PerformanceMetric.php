@@ -111,9 +111,7 @@ class PerformanceMetric extends Model
             return $obj->comments()->count();
         });
 
-        $totalAttachments = $objectives->sum(function($obj) {
-            return $obj->attachments()->count();
-        });
+        $totalAttachments = 0; // Objectives don't have attachments relationship
 
         $avgCompletionTime = $objectives->where('status', 'completed')
             ->avg(function($obj) {
