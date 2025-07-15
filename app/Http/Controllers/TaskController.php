@@ -64,7 +64,7 @@ class TaskController extends Controller
     public function show(Task $task)
     {
         $this->authorize('view', $task);
-        $task->load(['keyResult.objective', 'assignee', 'creator', 'activities.causer']);
+        $task->load(['keyResult.objective', 'assignee', 'creator']);
         return view('tasks.show', compact('task'));
     }
 
