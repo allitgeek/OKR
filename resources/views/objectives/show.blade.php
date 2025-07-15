@@ -5,7 +5,7 @@
                 <h2 class="text-2xl font-bold text-gray-800 leading-tight">
                     {{ $objective->title }}
                 </h2>
-                <p class="mt-1 text-sm text-gray-600">Created {{ $objective->created_at ? $objective->created_at->diffForHumans() : 'N/A' }}</p>
+                <p class="mt-1 text-sm text-gray-600">Created {{ $objective->created_at->diffForHumans() }}</p>
             </div>
             <div class="flex items-center space-x-3">
                 <a href="{{ route('objectives.edit', $objective) }}" 
@@ -161,7 +161,7 @@
                                         </div>
                                     </div>
                                     <div class="text-sm text-gray-500">
-                                        Last Updated: {{ $keyResult->updated_at ? $keyResult->updated_at->diffForHumans() : 'N/A' }}
+                                        Last Updated: {{ $keyResult->updated_at->diffForHumans() }}
                                     </div>
                                 </div>
                             </div>

@@ -1,20 +1,13 @@
 {
-  "_vendor-LfbfoprD.js": {
-    "file": "assets/vendor-LfbfoprD.js",
-    "name": "vendor"
-  },
   "resources/css/app.css": {
-    "file": "assets/app-BRlLe5vK.css",
+    "file": "assets/app-BUHENVOq.css",
     "src": "resources/css/app.css",
     "isEntry": true
   },
   "resources/js/app.js": {
-    "file": "assets/app-MCTPs-sV.js",
+    "file": "assets/app-DaBYqt0m.js",
     "name": "app",
     "src": "resources/js/app.js",
-    "isEntry": true,
-    "imports": [
-      "_vendor-LfbfoprD.js"
-    ]
+    "isEntry": true
   }
 }

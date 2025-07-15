@@ -7,7 +7,6 @@ use App\Models\KeyResult;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Illuminate\Support\Facades\Cache;
 
 class ObjectiveController extends Controller
 {
@@ -20,17 +19,10 @@ class ObjectiveController extends Controller
 
     public function index()
     {
-        $page = request()->get('page', 1);
-        $userId = auth()->id();
-        
-        $objectives = Cache::remember("user.{$userId}.objectives.page.{$page}", 300, function () {
-            return auth()->user()->objectives()
-                ->select('id', 'title', 'description', 'status', 'progress', 'start_date', 'end_date', 'time_period')
-                ->with(['keyResults:id,objective_id,title,current_value,target_value'])
-                ->latest()
-                ->paginate(10);
-        });
-        
+        $objectives = auth()->user()->objectives()
+            ->with('keyResults')
+            ->latest()
+            ->paginate(10); // Paginate with 10 items per page
         return view('objectives.index', compact('objectives'));
     }
 
@@ -61,23 +53,12 @@ class ObjectiveController extends Controller
 
     public function show(Objective $objective)
     {
-        $objective = Cache::remember("objective.{$objective->id}", 300, function () use ($objective) {
-            return $objective->load([
-                'keyResults:id,objective_id,title,current_value,target_value,owner_id',
-                'keyResults.owner:id,name',
-                'tasks:id,objective_id,title,status'
-            ]);
-        });
-        
         return view('objectives.show', compact('objective'));
     }
 
     public function edit(Objective $objective)
     {
-        $users = Cache::remember('users.list', 3600, function () {
-            return User::select('id', 'name')->get();
-        });
-        
+        $users = User::all();
         return view('objectives.edit', compact('objective', 'users'));
     }
 
@@ -92,10 +73,6 @@ class ObjectiveController extends Controller
         ]);
 
         $objective->update($validated);
-        
-        // Clear related caches
-        Cache::forget("objective.{$objective->id}");
-        Cache::forget("user." . auth()->id() . ".objectives.page.1");
 
         return redirect()->route('objectives.show', $objective)
             ->with('success', 'Objective updated successfully.');
@@ -104,10 +81,6 @@ class ObjectiveController extends Controller
     public function destroy(Objective $objective)
     {
         $objective->delete();
-        
-        // Clear related caches
-        Cache::forget("objective.{$objective->id}");
-        Cache::forget("user." . auth()->id() . ".objectives.page.1");
 
         return redirect()->route('objectives.index')
             ->with('success', 'Objective deleted successfully.');
@@ -124,21 +97,12 @@ class ObjectiveController extends Controller
             'owner_id' => 'required|exists:users,id',
         ]);
 
-        \DB::transaction(function () use ($validated, $objective) {
-            $keyResult = $objective->keyResults()->create([
-                'title' => $validated['title'],
-                'target_value' => $validated['target_value'],
-                'current_value' => $validated['current_value'],
-                'owner_id' => $validated['owner_id'],
-            ]);
-            
-            // Update objective progress in the same transaction
-            $objective->updateProgress();
-        });
-        
-        // Clear related caches
-        Cache::forget("objective.{$objective->id}");
-        Cache::forget("user." . auth()->id() . ".objectives.page.1");
+        $keyResult = $objective->keyResults()->create([
+            'title' => $validated['title'],
+            'target_value' => $validated['target_value'],
+            'current_value' => $validated['current_value'],
+            'owner_id' => $validated['owner_id'],
+        ]);
 
         return redirect()->route('objectives.show', $objective)
             ->with('success', 'Key Result added successfully.');
