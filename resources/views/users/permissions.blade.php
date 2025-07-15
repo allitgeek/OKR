@@ -19,6 +19,27 @@
                 </div>
             @endif
 
+            <!-- Search Section -->
+            <div class="mb-6">
+                <div class="relative max-w-md">
+                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </div>
+                    <input 
+                        type="text" 
+                        id="user-search" 
+                        class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm" 
+                        placeholder="Search users by name or email..." 
+                        autocomplete="off"
+                    >
+                </div>
+                <div id="search-results" class="mt-2 text-sm text-gray-600">
+                    <span id="results-text">Showing all {{ $users->count() }} users</span>
+                </div>
+            </div>
+
             <!-- Action Buttons -->
             <div class="mb-4">
                 <x-primary-button type="button" onclick="openModal('createUserModal')" class="bg-navy-600">
@@ -52,7 +73,10 @@
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
                                 @foreach ($users as $user)
-                                    <tr>
+                                    <tr class="user-row" 
+                                        data-name="{{ strtolower($user->name) }}" 
+                                        data-email="{{ strtolower($user->email) }}"
+                                        data-roles="{{ strtolower($user->roles->pluck('name')->implode(' ')) }}">
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             {{ $user->name }}
                                         </td>
@@ -114,7 +138,10 @@
                     <!-- Mobile View -->
                     <div class="md:hidden space-y-4">
                         @foreach ($users as $user)
-                            <div class="bg-white rounded-lg shadow p-4 border border-gray-200">
+                            <div class="user-card bg-white rounded-lg shadow p-4 border border-gray-200"
+                                 data-name="{{ strtolower($user->name) }}" 
+                                 data-email="{{ strtolower($user->email) }}"
+                                 data-roles="{{ strtolower($user->roles->pluck('name')->implode(' ')) }}">
                                 <div class="space-y-2">
                                     <div>
                                         <label class="text-xs font-medium text-gray-500 uppercase">Name</label>
@@ -201,5 +228,72 @@
         @if($errors->any())
             openModal('createUserModal');
         @endif
+
+        // Real-time user search functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('user-search');
+            const resultsText = document.getElementById('results-text');
+            const userRows = document.querySelectorAll('.user-row');
+            const userCards = document.querySelectorAll('.user-card');
+            const allUsers = [...userRows, ...userCards];
+            
+            let searchTimeout;
+
+            function performSearch() {
+                const searchTerm = searchInput.value.toLowerCase().trim();
+                let visibleCount = 0;
+
+                allUsers.forEach(user => {
+                    const name = user.dataset.name || '';
+                    const email = user.dataset.email || '';
+                    const roles = user.dataset.roles || '';
+                    
+                    const isMatch = name.includes(searchTerm) || 
+                                  email.includes(searchTerm) || 
+                                  roles.includes(searchTerm);
+
+                    if (isMatch || searchTerm === '') {
+                        user.style.display = '';
+                        visibleCount++;
+                    } else {
+                        user.style.display = 'none';
+                    }
+                });
+
+                // Update results text
+                const totalUsers = {{ $users->count() }};
+                if (searchTerm === '') {
+                    resultsText.textContent = `Showing all ${totalUsers} users`;
+                } else {
+                    resultsText.textContent = `Found ${visibleCount} of ${totalUsers} users matching "${searchInput.value}"`;
+                }
+
+                // Add visual feedback for no results
+                if (visibleCount === 0 && searchTerm !== '') {
+                    resultsText.textContent = 'No users found matching your search';
+                    resultsText.className = 'mt-2 text-sm text-red-600';
+                } else {
+                    resultsText.className = 'mt-2 text-sm text-gray-600';
+                }
+            }
+
+            // Real-time search with debouncing
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(performSearch, 150); // 150ms delay for smooth UX
+            });
+
+            // Clear search on escape key
+            searchInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    searchInput.value = '';
+                    performSearch();
+                    searchInput.blur();
+                }
+            });
+
+            // Initial search state
+            performSearch();
+        });
     </script>
 </x-app-layout> 
