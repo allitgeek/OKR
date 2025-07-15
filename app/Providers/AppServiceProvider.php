@@ -3,7 +3,6 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\DB;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -31,22 +30,5 @@ class AppServiceProvider extends ServiceProvider
         set_error_handler(function($errno, $errstr, $errfile, $errline) {
             return true; // Suppress all errors
         });
-
-        // Performance Optimizations
-        if (!app()->isLocal()) {
-            // Disable query log
-            DB::connection()->disableQueryLog();
-            
-            // Enable model lazy loading strict mode to prevent N+1 issues
-            \Illuminate\Database\Eloquent\Model::preventLazyLoading();
-            
-            // Increase PHP memory limit
-            ini_set('memory_limit', '256M');
-            
-            // Enable OPcache
-            if (function_exists('opcache_enable')) {
-                opcache_enable();
-            }
-        }
     }
 }

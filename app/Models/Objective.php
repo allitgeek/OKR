@@ -31,8 +31,6 @@ class Objective extends Model
         'start_date' => 'date',
         'end_date' => 'date',
         'progress' => 'integer',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
     ];
 
     public $isUpdatingProgress = false;

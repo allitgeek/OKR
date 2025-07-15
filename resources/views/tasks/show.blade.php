@@ -55,56 +55,85 @@
                     </div>
 
                     <!-- Related Objective and Key Result -->
-                    <div class="border-t pt-8">
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">{{ __('Related Objective & Key Result') }}</h3>
-                        
-                        <div class="bg-gray-50 rounded-lg p-4">
-                            <div class="mb-4">
-                                <h4 class="font-medium text-gray-700">{{ __('Objective') }}</h4>
-                                <a href="{{ route('objectives.show', $task->keyResult->objective) }}" class="text-blue-600 hover:text-blue-800">
-                                    {{ $task->keyResult->objective->title }}
-                                </a>
-                            </div>
+                    @if($task->keyResult)
+                        <div class="border-t pt-8">
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">{{ __('Related Objective & Key Result') }}</h3>
+                            
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <div class="mb-4">
+                                    <h4 class="font-medium text-gray-700">{{ __('Objective') }}</h4>
+                                    <a href="{{ route('objectives.show', $task->keyResult->objective) }}" class="text-blue-600 hover:text-blue-800">
+                                        {{ $task->keyResult->objective->title }}
+                                    </a>
+                                </div>
 
-                            <div>
-                                <h4 class="font-medium text-gray-700">{{ __('Key Result') }}</h4>
-                                <p class="text-gray-600">{{ $task->keyResult->title }}</p>
-                                <div class="mt-2">
-                                    <div class="w-full bg-gray-200 rounded-full h-2.5">
-                                        <div class="bg-blue-600 h-2.5 rounded-full" style="width: {{ $task->keyResult->progress }}%"></div>
+                                <div>
+                                    <h4 class="font-medium text-gray-700">{{ __('Key Result') }}</h4>
+                                    <p class="text-gray-600">{{ $task->keyResult->title }}</p>
+                                    <div class="mt-2">
+                                        <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                            <div class="bg-blue-600 h-2.5 rounded-full" style="width: {{ $task->keyResult->progress }}%"></div>
+                                        </div>
+                                        <p class="mt-1 text-sm text-gray-600">
+                                            Progress: {{ $task->keyResult->progress }}%
+                                            ({{ $task->keyResult->current_value }} / {{ $task->keyResult->target_value }})
+                                        </p>
                                     </div>
-                                    <p class="mt-1 text-sm text-gray-600">
-                                        Progress: {{ $task->keyResult->progress }}%
-                                        ({{ $task->keyResult->current_value }} / {{ $task->keyResult->target_value }})
-                                    </p>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    @else
+                        <div class="border-t pt-8">
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">{{ __('Related Objective & Key Result') }}</h3>
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <p class="text-gray-600">{{ __('This task is not linked to any key result.') }}</p>
+                            </div>
+                        </div>
+                    @endif
 
-                    <!-- Task History -->
+                    <!-- Task Comments -->
                     <div class="border-t pt-8">
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">{{ __('Task History') }}</h3>
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">{{ __('Task Information') }}</h3>
                         
                         <div class="space-y-4">
-                            @foreach($task->activities as $activity)
+                            <div class="bg-gray-50 rounded-lg p-4">
                                 <div class="flex items-start space-x-3">
                                     <div class="flex-shrink-0">
-                                        <div class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
-                                            <span class="text-gray-500 text-sm">{{ substr($activity->causer->name ?? 'System', 0, 1) }}</span>
+                                        <div class="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
+                                            <span class="text-blue-600 text-sm font-medium">{{ substr($task->creator->name, 0, 1) }}</span>
                                         </div>
                                     </div>
                                     <div>
                                         <div class="text-sm">
-                                            <span class="font-medium text-gray-900">{{ $activity->causer->name ?? 'System' }}</span>
-                                            <span class="text-gray-500">{{ $activity->description }}</span>
+                                            <span class="font-medium text-gray-900">{{ $task->creator->name }}</span>
+                                            <span class="text-gray-500">created this task</span>
                                         </div>
                                         <div class="mt-1 text-sm text-gray-500">
-                                            {{ $activity->created_at->diffForHumans() }}
+                                            {{ $task->created_at->diffForHumans() }}
                                         </div>
                                     </div>
                                 </div>
-                            @endforeach
+                            </div>
+
+                            @if($task->updated_at != $task->created_at)
+                                <div class="bg-gray-50 rounded-lg p-4">
+                                    <div class="flex items-start space-x-3">
+                                        <div class="flex-shrink-0">
+                                            <div class="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
+                                                <span class="text-green-600 text-sm">✓</span>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div class="text-sm">
+                                                <span class="text-gray-500">Task was last updated</span>
+                                            </div>
+                                            <div class="mt-1 text-sm text-gray-500">
+                                                {{ $task->updated_at->diffForHumans() }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </div>

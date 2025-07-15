@@ -39,32 +39,35 @@ class TaskController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'due_date' => 'nullable|date',
-            'key_result_id' => 'required|exists:key_results,id',
+            'key_result_id' => 'nullable|exists:key_results,id',
             'assignee_id' => 'required|exists:users,id',
         ]);
 
-        // Get the objective_id from the selected key result
-        $keyResult = KeyResult::findOrFail($validated['key_result_id']);
+        // Get the objective_id from the selected key result (if any)
+        $objectiveId = null;
+        if ($validated['key_result_id']) {
+            $keyResult = KeyResult::findOrFail($validated['key_result_id']);
+            $objectiveId = $keyResult->objective_id;
+        }
 
         $task = Task::create([
             'title' => $validated['title'],
             'description' => $validated['description'],
             'due_date' => $validated['due_date'],
             'key_result_id' => $validated['key_result_id'],
-            'objective_id' => $keyResult->objective_id,
+            'objective_id' => $objectiveId,
             'assignee_id' => $validated['assignee_id'],
             'creator_id' => auth()->id(),
-            'status' => 'pending_acceptance', // Changed from 'pending' to 'pending_acceptance'
+            'status' => 'assigned', // Default status
         ]);
 
-        return redirect()->route('tasks.show', $task)
-            ->with('success', 'Task created successfully.');
+        return redirect()->route('tasks.show', $task)->with('success', 'Task created successfully.');
     }
 
     public function show(Task $task)
     {
         $this->authorize('view', $task);
-        $task->load(['keyResult.objective', 'assignee', 'creator', 'activities.causer']);
+        $task->load(['keyResult.objective', 'assignee', 'creator']);
         return view('tasks.show', compact('task'));
     }
 
@@ -89,19 +92,22 @@ class TaskController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'due_date' => 'nullable|date',
-            'key_result_id' => 'required|exists:key_results,id',
+            'key_result_id' => 'nullable|exists:key_results,id',
             'assignee_id' => 'required|exists:users,id',
             'status' => 'required|in:assigned,pending_acceptance,accepted,rejected,in_progress,completed,blocked', // Updated status options
         ]);
 
-        // Get the objective_id from the selected key result
-        $keyResult = KeyResult::findOrFail($validated['key_result_id']);
-        $validated['objective_id'] = $keyResult->objective_id;
+        // Get the objective_id from the selected key result (if any)
+        $objectiveId = null;
+        if ($validated['key_result_id']) {
+            $keyResult = KeyResult::findOrFail($validated['key_result_id']);
+            $objectiveId = $keyResult->objective_id;
+        }
+        $validated['objective_id'] = $objectiveId;
 
         $task->update($validated);
 
-        return redirect()->route('tasks.show', $task)
-            ->with('success', 'Task updated successfully.');
+        return redirect()->route('tasks.show', $task)->with('success', 'Task updated successfully.');
     }
 
     public function destroy(Task $task)
