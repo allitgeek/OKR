@@ -1,3 +1,5 @@
+<?php
+
 use App\Http\Controllers\Api\ObjectiveController;
 use App\Http\Controllers\Api\KeyResultController;
 use App\Http\Controllers\Api\TaskController;
