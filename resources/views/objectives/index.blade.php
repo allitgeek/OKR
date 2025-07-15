@@ -55,7 +55,7 @@
 
     <div class="py-8">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div id="objectives-container" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div id="objectives-container" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3 items-start">
                 @forelse($objectives as $objective)
                     <div class="objective-card bg-white overflow-hidden shadow-sm rounded-lg hover:shadow-md transition-shadow duration-200" data-id="{{ $objective->id }}">
                         <div class="p-6">
@@ -76,16 +76,20 @@
                             </div>
 
                             <!-- Description with Read More -->
-                            <div class="mb-4">
+                            <div class="mb-4 h-20 flex flex-col">
                                 @php
                                     $truncatedDesc = truncateDescription($objective->description, 120);
                                     $needsReadMore = Str::length($objective->description) > 120;
                                 @endphp
-                                <p class="text-gray-600 text-sm">{{ $truncatedDesc }}</p>
+                                <div class="flex-1 overflow-hidden">
+                                    <p class="text-gray-600 text-sm leading-relaxed line-clamp-3">{{ $truncatedDesc }}</p>
+                                </div>
                                 @if($needsReadMore)
-                                    <a href="{{ route('objectives.show', $objective) }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors duration-200">
-                                        Read more →
-                                    </a>
+                                    <div class="mt-1">
+                                        <a href="{{ route('objectives.show', $objective) }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors duration-200 inline-block">
+                                            Read more →
+                                        </a>
+                                    </div>
                                 @endif
                             </div>
 
@@ -108,11 +112,11 @@
                                     <div>Total KR</div>
                                 </div>
                                 <div class="bg-green-50 rounded-lg p-2.5 text-center">
-                                    <div class="font-semibold text-green-700">{{ $objective->keyResults->where('progress', '>=', 100)->count() }}</div>
+                                    <div class="font-semibold text-green-700">{{ $objective->keyResults->filter(function($kr) { return $kr->current_value >= $kr->target_value; })->count() }}</div>
                                     <div class="text-green-600">Completed KR</div>
                                 </div>
                                 <div class="bg-yellow-50 rounded-lg p-2.5 text-center">
-                                    <div class="font-semibold text-yellow-700">{{ $objective->keyResults->where('progress', '<', 100)->count() }}</div>
+                                    <div class="font-semibold text-yellow-700">{{ $objective->keyResults->filter(function($kr) { return $kr->current_value < $kr->target_value; })->count() }}</div>
                                     <div class="text-yellow-600">Pending KR</div>
                                 </div>
                             </div>
@@ -172,6 +176,18 @@
         }
         .objective-card:hover {
             cursor: grab;
+        }
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+            overflow: hidden;
+        }
+        .line-clamp-3 {
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 3;
+            overflow: hidden;
         }
     </style>
 

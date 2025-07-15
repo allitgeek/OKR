@@ -142,12 +142,12 @@
                                     <div class="flex items-center">
                                         <div class="flex-grow">
                                             <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
-                                                <div class="h-2 {{ $keyResult->progress >= 100 ? 'bg-green-500' : 'bg-blue-500' }} rounded-full transition-all duration-300 ease-in-out" 
+                                                <div class="h-2 {{ $keyResult->current_value >= $keyResult->target_value ? 'bg-green-500' : 'bg-blue-500' }} rounded-full transition-all duration-300 ease-in-out" 
                                                      style="width: {{ ($keyResult->current_value / $keyResult->target_value) * 100 }}%">
                                                 </div>
                                             </div>
                                         </div>
-                                        <span class="ml-3 text-sm font-medium {{ $keyResult->progress >= 100 ? 'text-green-600' : 'text-blue-600' }}">
+                                        <span class="ml-3 text-sm font-medium {{ $keyResult->current_value >= $keyResult->target_value ? 'text-green-600' : 'text-blue-600' }}">
                                             {{ number_format(($keyResult->current_value / $keyResult->target_value) * 100, 1) }}%
                                         </span>
                                     </div>
@@ -179,7 +179,7 @@
                                     <div class="mb-6 p-4 bg-gray-50 rounded-lg">
                                         <div class="flex justify-between items-center mb-2">
                                             <span class="text-sm text-gray-600">Current Progress</span>
-                                            <span class="text-sm font-medium {{ $keyResult->progress >= 100 ? 'text-green-600' : 'text-blue-600' }}">
+                                            <span class="text-sm font-medium {{ $keyResult->current_value >= $keyResult->target_value ? 'text-green-600' : 'text-blue-600' }}">
                                                 {{ number_format(($keyResult->current_value / $keyResult->target_value) * 100, 1) }}%
                                             </span>
                                         </div>

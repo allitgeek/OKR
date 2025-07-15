@@ -9,7 +9,7 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6">
-                    <form method="POST" action="{{ route('objectives.update', $objective) }}" class="space-y-6">
+                    <form method="POST" action="{{ route('objectives.update', $objective) }}" class="space-y-6" id="objective-form">
                         @csrf
                         @method('PUT')
 
@@ -26,9 +26,25 @@
                         </div>
 
                         <div>
-                            <x-input-label for="due_date" :value="__('Due Date')" />
-                            <x-text-input id="due_date" name="due_date" type="date" class="mt-1 block w-full" :value="old('due_date', $objective->due_date?->format('Y-m-d'))" />
-                            <x-input-error class="mt-2" :messages="$errors->get('due_date')" />
+                            <x-input-label for="start_date" :value="__('Start Date')" />
+                            <x-text-input id="start_date" name="start_date" type="date" class="mt-1 block w-full" :value="old('start_date', $objective->start_date?->format('Y-m-d'))" />
+                            <x-input-error class="mt-2" :messages="$errors->get('start_date')" />
+                        </div>
+
+                        <div>
+                            <x-input-label for="end_date" :value="__('Due Date')" />
+                            <x-text-input id="end_date" name="end_date" type="date" class="mt-1 block w-full" :value="old('end_date', $objective->end_date?->format('Y-m-d'))" />
+                            <x-input-error class="mt-2" :messages="$errors->get('end_date')" />
+                        </div>
+
+                        <div>
+                            <x-input-label for="time_period" :value="__('Time Period')" />
+                            <select id="time_period" name="time_period" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
+                                <option value="monthly" {{ old('time_period', $objective->time_period) == 'monthly' ? 'selected' : '' }}>Monthly</option>
+                                <option value="quarterly" {{ old('time_period', $objective->time_period) == 'quarterly' ? 'selected' : '' }}>Quarterly</option>
+                                <option value="yearly" {{ old('time_period', $objective->time_period) == 'yearly' ? 'selected' : '' }}>Yearly</option>
+                            </select>
+                            <x-input-error class="mt-2" :messages="$errors->get('time_period')" />
                         </div>
 
                         <div class="flex items-center gap-4">
@@ -89,7 +105,12 @@
 
                         <div class="mt-6 space-y-4">
                             @foreach($objective->keyResults as $keyResult)
-                                <div class="bg-gray-50 p-4 rounded-lg">
+                                @php
+                                    $isComplete = $keyResult->current_value >= $keyResult->target_value;
+                                    $progressPercent = ($keyResult->current_value / $keyResult->target_value) * 100;
+                                    $progressColor = $isComplete ? 'bg-green-600' : 'bg-blue-600';
+                                @endphp
+                                <div class="bg-gray-50 p-4 rounded-lg" data-kr-due-date="{{ $keyResult->due_date?->format('Y-m-d') }}">
                                     <div class="flex items-center justify-between">
                                         <div class="flex-grow">
                                             <h4 class="font-medium">{{ $keyResult->title }}</h4>
@@ -97,11 +118,11 @@
                                                 <div class="flex items-center">
                                                     <div class="flex-grow">
                                                         <div class="h-2 bg-gray-200 rounded-full">
-                                                            <div class="h-2 bg-blue-600 rounded-full" style="width: {{ ($keyResult->current_value / $keyResult->target_value) * 100 }}%"></div>
+                                                            <div class="h-2 {{ $progressColor }} rounded-full" style="width: {{ $progressPercent }}%"></div>
                                                         </div>
                                                     </div>
                                                     <span class="ml-2 text-sm text-gray-600">
-                                                        {{ number_format(($keyResult->current_value / $keyResult->target_value) * 100, 1) }}%
+                                                        {{ number_format($progressPercent, 1) }}%
                                                     </span>
                                                 </div>
                                                 <div class="mt-1 text-sm text-gray-600">
@@ -111,6 +132,9 @@
                                             <div class="mt-2 text-sm text-gray-600">
                                                 <span>Owner: {{ $keyResult->owner->name }}</span>
                                                 <span class="ml-4">Last Updated: {{ $keyResult->updated_at->diffForHumans() }}</span>
+                                                @if($keyResult->due_date)
+                                                    <span class="ml-4">Due: {{ $keyResult->due_date->format('M d, Y') }}</span>
+                                                @endif
                                             </div>
                                         </div>
                                         <div class="ml-4 bg-yellow-200 rounded-lg p-2 flex items-center space-x-2">
@@ -169,6 +193,46 @@
         targetValueInput.addEventListener('change', function() {
             const currentPercentage = (parseFloat(currentValueInput.value) / parseFloat(this.value)) * 100;
             currentValueInput.value = (currentPercentage / 100) * parseFloat(this.value);
+        });
+
+        // Due date validation
+        const endDateInput = document.getElementById('end_date');
+        const objectiveForm = document.getElementById('objective-form');
+        
+        objectiveForm.addEventListener('submit', function(e) {
+            const newEndDate = endDateInput.value;
+            if (!newEndDate) return;
+            
+            const newEndDateTime = new Date(newEndDate);
+            const conflictingKRs = [];
+            
+            // Check all KR due dates
+            document.querySelectorAll('[data-kr-due-date]').forEach(function(krElement) {
+                const krDueDate = krElement.getAttribute('data-kr-due-date');
+                if (krDueDate && krDueDate !== 'null') {
+                    const krDueDateTime = new Date(krDueDate);
+                    if (krDueDateTime > newEndDateTime) {
+                        const krTitle = krElement.querySelector('h4').textContent;
+                        conflictingKRs.push({
+                            title: krTitle,
+                            dueDate: krDueDate
+                        });
+                    }
+                }
+            });
+            
+            if (conflictingKRs.length > 0) {
+                e.preventDefault();
+                
+                let message = `Cannot save objective due date because the following Key Results have due dates that are after the new objective due date:\n\n`;
+                conflictingKRs.forEach(kr => {
+                    message += `• ${kr.title} (Due: ${new Date(kr.dueDate).toLocaleDateString()})\n`;
+                });
+                message += `\nPlease update these Key Result due dates first, then try again.`;
+                
+                alert(message);
+                return false;
+            }
         });
 
         // Function to mark key result as complete
