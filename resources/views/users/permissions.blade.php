@@ -210,9 +210,9 @@
     </div>
 
     <!-- Modals -->
-    <x-user-modals :roles="$roles" />
+    <x-user-modals :roles="$roles" :teams="$teams" :users="$users" />
     @foreach ($users as $user)
-        <x-user-modals :user="$user" :roles="$roles" />
+        <x-user-modals :user="$user" :roles="$roles" :teams="$teams" :users="$users" />
     @endforeach
 
     <script>

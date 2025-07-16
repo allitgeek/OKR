@@ -19,24 +19,13 @@ class Objective extends Model
         'description',
         'user_id',
         'team_id',
-        'creator_id',
-        'parent_objective_id',
-        'level',
+        'parent_id',
+        'status',
+        'progress',
+        'confidence_level',
         'start_date',
         'end_date',
-        'status',
-        'time_period',
-        'cycle_id',
-        'cycle_year',
-        'cycle_quarter',
-        'progress',
-        'okr_score',
-        'confidence_level',
-        'okr_type',
-        'last_check_in',
-        'last_check_in_notes',
-        'is_measurable',
-        'is_specific',
+        'company_id',
     ];
 
     protected $casts = [
@@ -176,16 +165,19 @@ class Objective extends Model
     // OKR Methodology Methods
     public function calculateOkrScore(): float
     {
-        if ($this->keyResults()->count() === 0) {
-            return 0.0;
+        $totalWeight = $this->keyResults()->sum('weight');
+        
+        if ($totalWeight == 0) {
+            $this->okr_score = 0;
+            $this->saveQuietly();
+            return 0;
         }
 
-        $totalScore = $this->keyResults->sum(function ($keyResult) {
-            return $keyResult->calculateOkrScore();
-        });
+        $weightedScore = $this->keyResults()->get()->reduce(function ($carry, $kr) {
+            return $carry + ($kr->okr_score * $kr->weight);
+        }, 0);
 
-        $score = $totalScore / $this->keyResults()->count();
-        $this->okr_score = round($score, 2);
+        $this->okr_score = round($weightedScore / $totalWeight, 2);
         $this->saveQuietly();
 
         return $this->okr_score;

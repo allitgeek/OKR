@@ -97,7 +97,12 @@
                         @forelse($objective->keyResults as $keyResult)
                             <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors duration-150">
                                 <div class="flex items-center justify-between mb-3">
-                                    <h4 class="text-lg font-medium text-gray-900">{{ $keyResult->title }}</h4>
+                                    <div>
+                                        <a href="{{ route('key-results.edit', $keyResult) }}" class="text-lg font-semibold text-gray-900 hover:text-indigo-600">{{ $keyResult->title }}</a>
+                                        @if($keyResult->assignee)
+                                            <span class="text-sm text-gray-500 ml-2">({{ $keyResult->assignee->name }})</span>
+                                        @endif
+                                    </div>
                                     <div class="flex items-center space-x-2">
                                         <button type="button" 
                                             x-data

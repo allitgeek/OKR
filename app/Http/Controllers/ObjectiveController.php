@@ -19,10 +19,11 @@ class ObjectiveController extends Controller
 
     public function index()
     {
-        $objectives = auth()->user()->objectives()
+        $user = auth()->user();
+        $objectives = Objective::where('company_id', $user->company_id)
             ->with('keyResults')
             ->latest()
-            ->paginate(10); // Paginate with 10 items per page
+            ->paginate(10);
         return view('objectives.index', compact('objectives'));
     }
 
@@ -33,35 +34,24 @@ class ObjectiveController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $request->validate([
             'title' => 'required|string|max:255',
-            'description' => 'required|string',
+            'description' => 'nullable|string',
+            'user_id' => 'required|exists:users,id',
             'start_date' => 'required|date',
-            'end_date' => 'required|date|after:start_date',
-            'time_period' => 'required|in:monthly,quarterly,yearly',
-            'okr_type' => 'required|in:committed,aspirational',
-            'level' => 'required|in:company,team,individual',
-            'parent_objective_id' => 'nullable|exists:objectives,id',
-            'confidence_level' => 'required|numeric|min:0|max:1',
+            'end_date' => 'required|date|after_or_equal:start_date',
         ]);
 
-        $validated['user_id'] = auth()->id();
-        $validated['creator_id'] = auth()->id();
-        $validated['status'] = 'not_started';
-        $validated['progress'] = 0;
-        
-        // Set cycle information from current cycle
-        $currentCycle = \App\Models\OkrCycle::getCurrent();
-        if ($currentCycle) {
-            $validated['cycle_id'] = $currentCycle->name;
-            $validated['cycle_year'] = $currentCycle->year;
-            $validated['cycle_quarter'] = $currentCycle->quarter;
-        }
+        $objective = Objective::create([
+            'title' => $request->title,
+            'description' => $request->description,
+            'user_id' => $request->user_id,
+            'start_date' => $request->start_date,
+            'end_date' => $request->end_date,
+            'company_id' => auth()->user()->company_id,
+        ]);
 
-        $objective = Objective::create($validated);
-
-        return redirect()->route('objectives.show', $objective)
-            ->with('success', 'Objective created successfully.');
+        return redirect()->route('objectives.index')->with('success', 'Objective created successfully.');
     }
 
     public function show(Objective $objective)

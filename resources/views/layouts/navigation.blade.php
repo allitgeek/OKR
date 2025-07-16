@@ -29,14 +29,60 @@
                     <x-nav-link :href="route('tasks.index')" :active="request()->routeIs('tasks.*')" class="text-gray-300 hover:text-white">
                         {{ __('Tasks') }}
                     </x-nav-link>
+                    
+                    <!-- Settings Dropdown -->
+                    <div class="hidden sm:flex sm:items-center sm:ml-6">
+                        <x-dropdown align="left" width="48">
+                            <x-slot name="trigger">
+                                <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-300 hover:text-white focus:outline-none transition ease-in-out duration-150">
+                                    <div>{{ __('Settings') }}</div>
+                                    <div class="ml-1">
+                                        <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                        </svg>
+                                    </div>
+                                </button>
+                            </x-slot>
+
+                            <x-slot name="content">
+                                <x-dropdown-link :href="route('users.permissions.index')">
+                                    {{ __('Users') }}
+                                </x-dropdown-link>
+                                <x-dropdown-link :href="route('teams.index')">
+                                    {{ __('Teams') }}
+                                </x-dropdown-link>
+                                <x-dropdown-link :href="route('companies.create')">
+                                    {{ __('Company') }}
+                                </x-dropdown-link>
+                            </x-slot>
+                        </x-dropdown>
+                    </div>
+
+                    <!-- Help Dropdown -->
+                    <div class="hidden sm:flex sm:items-center sm:ml-6">
+                        <x-dropdown align="left" width="48">
+                            <x-slot name="trigger">
+                                <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-300 hover:text-white focus:outline-none transition ease-in-out duration-150">
+                                    <div>{{ __('Help') }}</div>
+                                    <div class="ml-1">
+                                        <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                        </svg>
+                                    </div>
+                                </button>
+                            </x-slot>
+
+                            <x-slot name="content">
+                                <x-dropdown-link :href="route('how-to.index')" class="text-gray-700 hover:bg-gray-700 hover:text-white">
+                                    {{ __('How to use OKR') }}
+                                </x-dropdown-link>
+                            </x-slot>
+                        </x-dropdown>
+                    </div>
+
                     @can('view-analytics')
                     <x-nav-link :href="route('analytics.dashboard')" :active="request()->routeIs('analytics.*')" class="text-gray-300 hover:text-white">
                         {{ __('Analytics') }}
-                    </x-nav-link>
-                    @endcan
-                    @can('manage-users')
-                    <x-nav-link :href="route('users.permissions.index')" :active="request()->routeIs('users.permissions.*')" class="text-gray-300 hover:text-white">
-                        {{ __('Users') }}
                     </x-nav-link>
                     @endcan
                 </div>
@@ -99,6 +145,9 @@
             </x-responsive-nav-link>
             <x-responsive-nav-link :href="route('tasks.index')" :active="request()->routeIs('tasks.*')" class="text-gray-300 hover:text-white">
                 {{ __('Tasks') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('how-to.index')" :active="request()->routeIs('how-to.*')" class="text-gray-300 hover:text-white">
+                {{ __('How to use OKR') }}
             </x-responsive-nav-link>
             @can('view-analytics')
             <x-responsive-nav-link :href="route('analytics.dashboard')" :active="request()->routeIs('analytics.*')" class="text-gray-300 hover:text-white">

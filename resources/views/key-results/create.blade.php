@@ -58,8 +58,26 @@
 
                         <div>
                             <x-input-label for="target_value" :value="__('Target Value')" />
-                            <x-text-input id="target_value" name="target_value" type="number" step="0.01" class="mt-1 block w-full" :value="old('target_value', 100)" required />
+                            <x-text-input id="target_value" name="target_value" type="number" step="0.01" class="mt-1 block w-full" :value="old('target_value')" required />
                             <x-input-error class="mt-2" :messages="$errors->get('target_value')" />
+                        </div>
+
+                        <div>
+                            <x-input-label for="weight" :value="__('Weight (0.0 - 1.0)')" />
+                            <x-text-input id="weight" class="block mt-1 w-full" type="number" step="0.1" name="weight" :value="old('weight', 0.5)" required />
+                            <x-input-error :messages="$errors->get('weight')" class="mt-2" />
+                        </div>
+
+                        <!-- Assignee -->
+                        <div class="mt-4">
+                            <x-input-label for="assignee_id" :value="__('Assignee')" />
+                            <select id="assignee_id" name="assignee_id" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
+                                <option value="">{{ __('Unassigned') }}</option>
+                                @foreach ($users as $user)
+                                    <option value="{{ $user->id }}">{{ $user->name }}</option>
+                                @endforeach
+                            </select>
+                            <x-input-error :messages="$errors->get('assignee_id')" class="mt-2" />
                         </div>
 
                         <div class="grid grid-cols-2 gap-4">

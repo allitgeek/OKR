@@ -11,44 +11,31 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        if (auth()->user()->hasRole('super-admin')) {
-            // Limit and paginate for better performance
-            $objectives = Objective::with(['user', 'keyResults.owner'])
-                ->latest()
-                ->limit(10) // Limit recent objectives
-                ->get();
+        $user = auth()->user();
+        $companyId = $user->company_id;
 
-            $tasks = Task::with(['creator', 'assignee', 'keyResult.objective'])
-                ->latest()
-                ->limit(15) // Limit recent tasks
-                ->get();
+        $objectivesQuery = Objective::with(['user', 'keyResults.assignee'])
+            ->where('company_id', $companyId);
 
-            $users = User::where('is_active', true)
-                ->limit(20) // Limit users shown
-                ->get();
-
-            return view('dashboard', compact('objectives', 'tasks', 'users'));
+        if (!$user->hasRole('super-admin')) {
+            $objectivesQuery->where(function ($query) use ($user) {
+                $query->where('user_id', $user->id)
+                    ->orWhereHas('keyResults', function ($q) use ($user) {
+                        $q->where('assignee_id', $user->id);
+                    });
+            });
         }
 
-        // Get both objectives where user is assigned and where user is creator
-        $objectives = Objective::with(['keyResults.owner'])
-            ->where(function($query) {
-                $query->where('user_id', auth()->id())
-                      ->orWhere('creator_id', auth()->id());
+        $objectives = $objectivesQuery->latest()->get();
+
+        $tasks = Task::with(['creator', 'assignee', 'keyResult.objective'])
+            ->whereHas('keyResult.objective', function ($query) use ($companyId) {
+                $query->where('company_id', $companyId);
             })
             ->latest()
-            ->limit(10) // Add limit for performance
             ->get();
 
-        $tasks = auth()->user()->assignedTasks()
-            ->with('keyResult.objective')
-            ->latest()
-            ->limit(15) // Add limit for performance
-            ->get();
-
-        $users = User::where('is_active', true)
-            ->limit(20) // Add limit for performance
-            ->get();
+        $users = User::where('company_id', $companyId)->get();
 
         return view('dashboard', compact('objectives', 'tasks', 'users'));
     }

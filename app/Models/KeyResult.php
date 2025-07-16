@@ -15,24 +15,17 @@ class KeyResult extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
+        'objective_id',
         'title',
         'description',
-        'objective_id',
-        'owner_id',
+        'initial_value',
         'target_value',
         'current_value',
-        'metric_unit',
-        'progress',
+        'weight',
+        'confidence',
         'status',
-        'start_date',
-        'due_date',
-        'okr_score',
-        'confidence_level',
-        'kr_type',
-        'last_check_in',
-        'last_check_in_notes',
-        'is_measurable',
-        'is_time_bound',
+        'type',
+        'assignee_id',
     ];
 
     protected $casts = [
@@ -56,6 +49,11 @@ class KeyResult extends Model
     public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'owner_id');
+    }
+
+    public function assignee()
+    {
+        return $this->belongsTo(User::class, 'assignee_id');
     }
 
     public function tasks(): HasMany

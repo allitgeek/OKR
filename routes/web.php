@@ -56,6 +56,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('tasks/{task}/complete', [TaskController::class, 'complete'])->name('tasks.complete');
     Route::post('/tasks/create', [DashboardController::class, 'createTask'])->name('tasks.create.super');
 
+    // Teams
+    Route::resource('teams', \App\Http\Controllers\TeamController::class);
+
+    // Company
+    Route::resource('companies', \App\Http\Controllers\CompanyController::class)->except(['index', 'show']);
+
     // User Permissions Management
     Route::get('/users/permissions', [UserPermissionController::class, 'index'])->name('users.permissions.index');
     Route::put('/users/{user}/permissions', [UserPermissionController::class, 'update'])->name('users.permissions.update');
@@ -96,9 +102,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 // OKR Management Routes
 Route::middleware('auth')->group(function () {
-    // OKR Dashboard
-    Route::get('okr/dashboard', [App\Http\Controllers\OkrCycleController::class, 'dashboard'])->name('okr.dashboard');
-    
     // OKR Cycles
     Route::resource('okr-cycles', App\Http\Controllers\OkrCycleController::class);
     Route::post('/okr-cycles/{cycle}/start', [App\Http\Controllers\OkrCycleController::class, 'start'])->name('okr-cycles.start');
@@ -114,6 +117,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // How To Guide
+    Route::get('/how-to', function () {
+        return view('how-to.index');
+    })->name('how-to.index');
 });
 
 require __DIR__.'/auth.php';
