@@ -3,7 +3,11 @@
 namespace App\Providers;
 
 use App\Models\Objective;
+use App\Models\KeyResult;
+use App\Models\Task;
 use App\Policies\ObjectivePolicy;
+use App\Policies\KeyResultPolicy;
+use App\Policies\TaskPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Gate;
 
@@ -16,6 +20,8 @@ class AuthServiceProvider extends ServiceProvider
      */
     protected $policies = [
         Objective::class => ObjectivePolicy::class,
+        KeyResult::class => KeyResultPolicy::class,
+        Task::class => TaskPolicy::class,
     ];
 
     /**
@@ -27,7 +33,7 @@ class AuthServiceProvider extends ServiceProvider
 
         // Superadmin has all permissions
         Gate::before(function ($user, $ability) {
-            if ($user->hasRole('admin')) {
+            if ($user->hasRole('super-admin')) {
                 return true;
             }
         });

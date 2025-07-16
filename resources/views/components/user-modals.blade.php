@@ -1,4 +1,4 @@
-@props(['user' => null, 'roles'])
+@props(['user' => null, 'roles', 'teams', 'users'])
 
 @if($user)
     <!-- Edit User Modal -->
@@ -34,6 +34,38 @@
                             <x-input-label for="password_confirmation-{{ $user->id }}" :value="__('Confirm New Password')" />
                             <x-text-input id="password_confirmation-{{ $user->id }}" type="password" name="password_confirmation" class="mt-1 block w-full" />
                             <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
+                        </div>
+
+                        <div class="mb-4">
+                            <x-input-label for="job_title-{{ $user->id }}" :value="__('Job Title')" />
+                            <x-text-input id="job_title-{{ $user->id }}" type="text" name="job_title" :value="$user->job_title" class="mt-1 block w-full" />
+                            <x-input-error :messages="$errors->get('job_title')" class="mt-2" />
+                        </div>
+
+                        <div class="mb-4">
+                            <x-input-label for="team_id-{{ $user->id }}" :value="__('Team')" />
+                            <select id="team_id-{{ $user->id }}" name="team_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                <option value="">No Team</option>
+                                @foreach ($teams as $team)
+                                    <option value="{{ $team->id }}" {{ $user->team_id == $team->id ? 'selected' : '' }}>
+                                        {{ $team->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <x-input-error :messages="$errors->get('team_id')" class="mt-2" />
+                        </div>
+
+                        <div class="mb-4">
+                            <x-input-label for="manager_id-{{ $user->id }}" :value="__('Manager')" />
+                            <select id="manager_id-{{ $user->id }}" name="manager_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                <option value="">No Manager</option>
+                                @foreach ($users as $manager)
+                                    <option value="{{ $manager->id }}" {{ $user->manager_id == $manager->id ? 'selected' : '' }}>
+                                        {{ $manager->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <x-input-error :messages="$errors->get('manager_id')" class="mt-2" />
                         </div>
                     </div>
                     <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
@@ -131,6 +163,38 @@
                             <x-input-label for="password_confirmation" :value="__('Confirm Password')" />
                             <x-text-input id="password_confirmation" type="password" name="password_confirmation" required class="mt-1 block w-full" />
                             <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
+                        </div>
+
+                        <div class="mb-4">
+                            <x-input-label for="job_title" :value="__('Job Title')" />
+                            <x-text-input id="job_title" type="text" name="job_title" :value="old('job_title')" class="mt-1 block w-full" />
+                            <x-input-error :messages="$errors->get('job_title')" class="mt-2" />
+                        </div>
+
+                        <div class="mb-4">
+                            <x-input-label for="team_id" :value="__('Team')" />
+                            <select id="team_id" name="team_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                <option value="">No Team</option>
+                                @foreach ($teams as $team)
+                                    <option value="{{ $team->id }}" {{ old('team_id') == $team->id ? 'selected' : '' }}>
+                                        {{ $team->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <x-input-error :messages="$errors->get('team_id')" class="mt-2" />
+                        </div>
+
+                        <div class="mb-4">
+                            <x-input-label for="manager_id" :value="__('Manager')" />
+                            <select id="manager_id" name="manager_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                <option value="">No Manager</option>
+                                @foreach ($users as $manager)
+                                    <option value="{{ $manager->id }}" {{ old('manager_id') == $manager->id ? 'selected' : '' }}>
+                                        {{ $manager->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <x-input-error :messages="$errors->get('manager_id')" class="mt-2" />
                         </div>
 
                         <div class="mb-4">

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\KeyResult;
 use App\Models\Objective;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -21,43 +22,39 @@ class KeyResultController extends Controller
         return view('key-results.index', compact('keyResults'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
-        $objectives = Objective::where('user_id', Auth::id())->get();
-        $users = \App\Models\User::where('is_active', true)->get();
-        return view('key-results.create', compact('objectives', 'users'));
+        $objective = Objective::findOrFail($request->query('objective_id'));
+        $users = User::all();
+        return view('key-results.create', compact('objective', 'users'));
     }
 
     public function store(Request $request)
     {
-        $objective = Objective::findOrFail($request->objective_id);
-        
         $request->validate([
-            'title' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
-            'objective_id' => ['required', 'exists:objectives,id'],
-            'owner_id' => ['required', 'exists:users,id'],
-            'target_value' => ['required', 'numeric', 'min:0'],
-            'current_value' => ['required', 'numeric', 'min:0'],
-            'start_date' => [
-                'required', 
-                'date',
-                'after_or_equal:' . $objective->start_date->format('Y-m-d'),
-                'before_or_equal:' . $objective->end_date->format('Y-m-d')
-            ],
-            'due_date' => [
-                'required',
-                'date',
-                'after_or_equal:start_date',
-                'before_or_equal:' . $objective->end_date->format('Y-m-d')
-            ]
+            'objective_id' => 'required|exists:objectives,id',
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'initial_value' => 'required|numeric',
+            'target_value' => 'required|numeric',
+            'weight' => 'required|numeric|min:0|max:1',
+            'assignee_id' => 'nullable|exists:users,id',
         ]);
 
-        $keyResult = KeyResult::create($request->all());
-        $keyResult->calculateProgress();
+        $objective = Objective::findOrFail($request->objective_id);
 
-        return redirect()->route('objectives.show', $keyResult->objective)
-            ->with('success', 'Key Result created successfully.');
+        $keyResult = KeyResult::create([
+            'objective_id' => $objective->id,
+            'title' => $request->title,
+            'description' => $request->description,
+            'initial_value' => $request->initial_value,
+            'target_value' => $request->target_value,
+            'weight' => $request->weight,
+            'current_value' => $request->initial_value,
+            'assignee_id' => $request->assignee_id,
+        ]);
+
+        return redirect()->route('objectives.show', $objective)->with('success', 'Key Result created successfully.');
     }
 
     public function show(KeyResult $keyResult)
@@ -67,45 +64,25 @@ class KeyResultController extends Controller
 
     public function edit(KeyResult $keyResult)
     {
-        $objectives = Objective::where('user_id', Auth::id())->get();
-        return view('key-results.edit', compact('keyResult', 'objectives'));
+        $users = User::all();
+        return view('key-results.edit', compact('keyResult', 'users'));
     }
 
     public function update(Request $request, KeyResult $keyResult)
     {
-        try {
-            $validated = $request->validate([
-                'title' => ['required', 'string', 'max:255'],
-                'description' => ['nullable', 'string'],
-                'target_value' => ['required', 'numeric', 'min:0'],
-                'current_value' => ['required', 'numeric', 'min:0'],
-                'start_date' => [
-                    'required', 
-                    'date',
-                    'after_or_equal:' . $keyResult->objective->start_date->format('Y-m-d'),
-                    'before_or_equal:' . $keyResult->objective->end_date->format('Y-m-d')
-                ],
-                'due_date' => [
-                    'required',
-                    'date',
-                    'after_or_equal:start_date',
-                    'before_or_equal:' . $keyResult->objective->end_date->format('Y-m-d')
-                ]
-            ]);
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'target_value' => 'required|numeric',
+            'current_value' => 'required|numeric',
+            'weight' => 'required|numeric|min:0|max:1',
+            'status' => 'required|string',
+            'assignee_id' => 'nullable|exists:users,id',
+        ]);
 
-            DB::transaction(function () use ($keyResult, $validated) {
-                $keyResult->update($validated);
-                $keyResult->calculateProgress();
-            });
+        $keyResult->update($request->all());
 
-            return redirect()
-                ->route('objectives.show', $keyResult->objective_id)
-                ->with('success', 'Key Result updated successfully.');
-        } catch (\Exception $e) {
-            return back()
-                ->withInput()
-                ->with('error', 'Failed to update key result. ' . $e->getMessage());
-        }
+        return redirect()->route('objectives.show', $keyResult->objective_id)->with('success', 'Key Result updated successfully.');
     }
 
     public function destroy(KeyResult $keyResult)

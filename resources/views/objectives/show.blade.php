@@ -97,7 +97,12 @@
                         @forelse($objective->keyResults as $keyResult)
                             <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors duration-150">
                                 <div class="flex items-center justify-between mb-3">
-                                    <h4 class="text-lg font-medium text-gray-900">{{ $keyResult->title }}</h4>
+                                    <div>
+                                        <a href="{{ route('key-results.edit', $keyResult) }}" class="text-lg font-semibold text-gray-900 hover:text-indigo-600">{{ $keyResult->title }}</a>
+                                        @if($keyResult->assignee)
+                                            <span class="text-sm text-gray-500 ml-2">({{ $keyResult->assignee->name }})</span>
+                                        @endif
+                                    </div>
                                     <div class="flex items-center space-x-2">
                                         <button type="button" 
                                             x-data
@@ -142,13 +147,21 @@
                                     <div class="flex items-center">
                                         <div class="flex-grow">
                                             <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
-                                                <div class="h-2 {{ $keyResult->current_value >= $keyResult->target_value ? 'bg-green-500' : 'bg-blue-500' }} rounded-full transition-all duration-300 ease-in-out" 
-                                                     style="width: {{ ($keyResult->current_value / $keyResult->target_value) * 100 }}%">
+                                                @php
+                                                    if ($keyResult->target_value == 0) {
+                                                        $progressPercent = $keyResult->current_value == 0 ? 100 : 0;
+                                                    } else {
+                                                        $progressPercent = ($keyResult->current_value / $keyResult->target_value) * 100;
+                                                    }
+                                                    $progressPercent = max(0, min(100, $progressPercent));
+                                                @endphp
+                                                <div class="h-2 {{ $progressPercent >= 100 ? 'bg-green-500' : 'bg-blue-500' }} rounded-full transition-all duration-300 ease-in-out" 
+                                                     style="width: {{ $progressPercent }}%">
                                                 </div>
                                             </div>
                                         </div>
-                                        <span class="ml-3 text-sm font-medium {{ $keyResult->current_value >= $keyResult->target_value ? 'text-green-600' : 'text-blue-600' }}">
-                                            {{ number_format(($keyResult->current_value / $keyResult->target_value) * 100, 1) }}%
+                                        <span class="ml-3 text-sm font-medium {{ $progressPercent >= 100 ? 'text-green-600' : 'text-blue-600' }}">
+                                            {{ number_format($progressPercent, 1) }}%
                                         </span>
                                     </div>
                                     <div class="flex justify-between items-center text-sm">
@@ -179,8 +192,16 @@
                                     <div class="mb-6 p-4 bg-gray-50 rounded-lg">
                                         <div class="flex justify-between items-center mb-2">
                                             <span class="text-sm text-gray-600">Current Progress</span>
-                                            <span class="text-sm font-medium {{ $keyResult->current_value >= $keyResult->target_value ? 'text-green-600' : 'text-blue-600' }}">
-                                                {{ number_format(($keyResult->current_value / $keyResult->target_value) * 100, 1) }}%
+                                            @php
+                                                if ($keyResult->target_value == 0) {
+                                                    $currentProgressPercent = $keyResult->current_value == 0 ? 100 : 0;
+                                                } else {
+                                                    $currentProgressPercent = ($keyResult->current_value / $keyResult->target_value) * 100;
+                                                }
+                                                $currentProgressPercent = max(0, min(100, $currentProgressPercent));
+                                            @endphp
+                                            <span class="text-sm font-medium {{ $currentProgressPercent >= 100 ? 'text-green-600' : 'text-blue-600' }}">
+                                                {{ number_format($currentProgressPercent, 1) }}%
                                             </span>
                                         </div>
                                         <div class="flex justify-between items-center">

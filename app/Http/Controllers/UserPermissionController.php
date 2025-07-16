@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\Role;
 use App\Models\Permission;
+use App\Models\Team;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
@@ -15,10 +16,11 @@ class UserPermissionController extends Controller
     {
         $this->authorize('manage-roles');
         
-        $users = User::with('roles')->paginate(10);
+        $users = User::with('roles', 'team', 'manager')->paginate(10);
         $roles = Role::all();
+        $teams = Team::all();
         
-        return view('users.permissions', compact('users', 'roles'));
+        return view('users.permissions', compact('users', 'roles', 'teams'));
     }
 
     public function createUser(Request $request)
@@ -30,13 +32,19 @@ class UserPermissionController extends Controller
             'email' => 'required|email|unique:users,email',
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'roles' => 'required|array',
-            'roles.*' => 'exists:roles,id'
+            'roles.*' => 'exists:roles,id',
+            'team_id' => 'nullable|exists:teams,id',
+            'manager_id' => 'nullable|exists:users,id',
+            'job_title' => 'nullable|string|max:255',
         ]);
 
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
-            'password' => Hash::make($validated['password'])
+            'password' => Hash::make($validated['password']),
+            'team_id' => $validated['team_id'],
+            'manager_id' => $validated['manager_id'],
+            'job_title' => $validated['job_title'],
         ]);
 
         $user->roles()->sync($validated['roles']);
@@ -51,6 +59,9 @@ class UserPermissionController extends Controller
         $rules = [
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user->id,
+            'team_id' => 'nullable|exists:teams,id',
+            'manager_id' => 'nullable|exists:users,id',
+            'job_title' => 'nullable|string|max:255',
         ];
 
         // Only validate password if it's being updated
@@ -63,6 +74,9 @@ class UserPermissionController extends Controller
         $updateData = [
             'name' => $validated['name'],
             'email' => $validated['email'],
+            'team_id' => $validated['team_id'],
+            'manager_id' => $validated['manager_id'],
+            'job_title' => $validated['job_title'],
         ];
 
         if ($request->filled('password')) {

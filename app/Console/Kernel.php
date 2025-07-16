@@ -10,11 +10,19 @@ class Kernel extends ConsoleKernel
     protected $commands = [
         Commands\EscalateOverdueTasks::class,
         Commands\MakeSuperAdmin::class,
+        Commands\CalculateAnalytics::class,
+        Commands\InitializeOkrCycle::class,
+        Commands\StartOkrCycle::class,
     ];
 
     protected function schedule(Schedule $schedule): void
     {
         $schedule->command('tasks:escalate-overdue')->daily();
+        
+        // Analytics calculations
+        $schedule->command('analytics:calculate daily')->daily()->at('02:00');
+        $schedule->command('analytics:calculate weekly')->weekly()->mondays()->at('03:00');
+        $schedule->command('analytics:calculate monthly')->monthly()->at('04:00');
     }
 
     protected function commands(): void

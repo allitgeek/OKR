@@ -32,7 +32,12 @@ class ObjectivePolicy
         if ($user->hasPermission('view-all-objectives')) {
             return true;
         }
-        return $objective->user_id === $user->id || $user->hasPermission('view-objectives');
+
+        if ($objective->user_id === $user->id) {
+            return true;
+        }
+
+        return $objective->keyResults()->where('assignee_id', $user->id)->exists();
     }
 
     /**

@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('name');
             $table->text('description')->nullable();
             $table->foreignId('leader_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('parent_team_id')->nullable()->constrained('teams')->onDelete('set null');
             $table->timestamps();
             $table->softDeletes();
         });

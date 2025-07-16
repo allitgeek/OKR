@@ -65,6 +65,38 @@
                             </div>
                         </div>
 
+                        <div>
+                            <x-input-label for="weight" :value="__('Weight')" />
+                            <x-text-input id="weight" name="weight" type="number" step="0.1" class="mt-1 block w-full" :value="old('weight', $keyResult->weight)" required />
+                            <x-input-error class="mt-2" :messages="$errors->get('weight')" />
+                        </div>
+
+                        <div>
+                            <x-input-label for="status" :value="__('Status')" />
+                            <select id="status" name="status" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
+                                <option value="in_progress" @selected($keyResult->status === 'in_progress')>{{ __('In Progress') }}</option>
+                                <option value="completed" @selected($keyResult->status === 'completed')>{{ __('Completed') }}</option>
+                                <option value="not_started" @selected($keyResult->status === 'not_started')>{{ __('Not Started') }}</option>
+                                <option value="on_hold" @selected($keyResult->status === 'on_hold')>{{ __('On Hold') }}</option>
+                            </select>
+                            <x-input-error :messages="$errors->get('status')" class="mt-2" />
+                        </div>
+
+                        <!-- Assignee -->
+                        <div class="mt-4">
+                            <x-input-label for="assignee_id" :value="__('Assignee')" />
+                            <select id="assignee_id" name="assignee_id" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
+                                <option value="">{{ __('Unassigned') }}</option>
+                                @foreach ($users as $user)
+                                    <option value="{{ $user->id }}" @selected($keyResult->assignee_id == $user->id)>
+                                        {{ $user->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <x-input-error :messages="$errors->get('assignee_id')" class="mt-2" />
+                        </div>
+
+
                         <input type="hidden" name="objective_id" value="{{ $keyResult->objective_id }}" />
 
                         <div class="flex items-center gap-4">

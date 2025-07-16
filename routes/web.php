@@ -6,6 +6,9 @@ use App\Http\Controllers\ObjectiveController;
 use App\Http\Controllers\KeyResultController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\UserPermissionController;
+use App\Http\Controllers\AnalyticsController;
+use App\Http\Controllers\OkrCycleController;
+use App\Http\Controllers\OkrCheckInController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -18,11 +21,19 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', function () {
-    return view('welcome');
+    if (auth()->check()) {
+        return redirect()->route('dashboard');
+    }
+    return redirect()->route('login');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    
+    // Debug route (temporary)
+    Route::get('/debug-user', function () {
+        return view('debug-user');
+    })->name('debug.user');
     
     // User Management
     Route::post('/users/create', [UserPermissionController::class, 'createUser'])->name('users.create');
@@ -45,16 +56,72 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('tasks/{task}/complete', [TaskController::class, 'complete'])->name('tasks.complete');
     Route::post('/tasks/create', [DashboardController::class, 'createTask'])->name('tasks.create.super');
 
+    // Teams
+    Route::resource('teams', \App\Http\Controllers\TeamController::class);
+
+    // Company
+    Route::resource('companies', \App\Http\Controllers\CompanyController::class)->except(['index', 'show']);
+
     // User Permissions Management
     Route::get('/users/permissions', [UserPermissionController::class, 'index'])->name('users.permissions.index');
     Route::put('/users/{user}/permissions', [UserPermissionController::class, 'update'])->name('users.permissions.update');
     Route::post('/users/{user}/super-admin', [UserPermissionController::class, 'assignSuperAdmin'])->name('users.permissions.super-admin');
+    
+    // OKR Cycles Management
+    Route::resource('okr-cycles', OkrCycleController::class);
+    Route::post('okr-cycles/{cycle}/start', [OkrCycleController::class, 'startCycle'])->name('okr-cycles.start');
+    Route::post('okr-cycles/{cycle}/close', [OkrCycleController::class, 'closeCycle'])->name('okr-cycles.close');
+    Route::post('okr-cycles/initialize-year', [OkrCycleController::class, 'initializeYear'])->name('okr-cycles.initialize-year');
+    Route::get('okr-dashboard', [OkrCycleController::class, 'dashboard'])->name('okr.dashboard');
+
+    // OKR Check-ins
+    Route::resource('okr-check-ins', OkrCheckInController::class);
+    Route::post('okr-check-ins/quick', [OkrCheckInController::class, 'quickCheckIn'])->name('okr-check-ins.quick');
+
+    // Analytics (Super Admin Only)
+    Route::prefix('analytics')->name('analytics.')->middleware('can:view-analytics')->group(function () {
+        Route::get('/dashboard', [AnalyticsController::class, 'dashboard'])->name('dashboard');
+        Route::get('/reports', [AnalyticsController::class, 'reports'])->name('reports');
+        Route::get('/team-performance', [AnalyticsController::class, 'teamPerformance'])->name('team-performance');
+        Route::get('/insights', [AnalyticsController::class, 'insights'])->name('insights');
+    });
+    
+    // Analytics API endpoints (for AJAX calls)
+    Route::prefix('api/analytics')->middleware('can:view-analytics')->group(function () {
+        Route::get('dashboard', [App\Http\Controllers\Api\AnalyticsController::class, 'dashboard']);
+        Route::get('success-rates', [App\Http\Controllers\Api\AnalyticsController::class, 'successRates']);
+        Route::get('team-performance', [App\Http\Controllers\Api\AnalyticsController::class, 'teamPerformance']);
+        Route::get('predictive-insights', [App\Http\Controllers\Api\AnalyticsController::class, 'predictiveInsights']);
+        Route::get('trends', [App\Http\Controllers\Api\AnalyticsController::class, 'trends']);
+        Route::post('custom-report', [App\Http\Controllers\Api\AnalyticsController::class, 'customReport']);
+        Route::get('performance-comparison', [App\Http\Controllers\Api\AnalyticsController::class, 'performanceComparison']);
+        Route::post('export', [App\Http\Controllers\Api\AnalyticsController::class, 'export'])->middleware('can:export-analytics');
+        Route::get('alerts', [App\Http\Controllers\Api\AnalyticsController::class, 'alerts']);
+    });
+});
+
+// OKR Management Routes
+Route::middleware('auth')->group(function () {
+    // OKR Cycles
+    Route::resource('okr-cycles', App\Http\Controllers\OkrCycleController::class);
+    Route::post('/okr-cycles/{cycle}/start', [App\Http\Controllers\OkrCycleController::class, 'start'])->name('okr-cycles.start');
+    Route::post('/okr-cycles/{cycle}/close', [App\Http\Controllers\OkrCycleController::class, 'close'])->name('okr-cycles.close');
+    Route::post('/okr-cycles/init/{year}', [App\Http\Controllers\OkrCycleController::class, 'initializeYear'])->name('okr-cycles.init');
+    
+    // OKR Check-ins
+    Route::resource('okr-check-ins', App\Http\Controllers\OkrCheckInController::class);
+    Route::post('/okr-check-ins/quick', [App\Http\Controllers\OkrCheckInController::class, 'quickCheckIn'])->name('okr-check-ins.quick');
 });
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // How To Guide
+    Route::get('/how-to', function () {
+        return view('how-to.index');
+    })->name('how-to.index');
 });
 
 require __DIR__.'/auth.php';

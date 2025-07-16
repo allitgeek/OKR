@@ -25,11 +25,13 @@ class RolesAndPermissionsSeeder extends Seeder
         ];
 
         foreach ($roles as $slug => $name) {
-            Role::create([
-                'name' => $name,
-                'slug' => $slug,
-                'description' => "Role for $name",
-            ]);
+            Role::updateOrCreate(
+                ['slug' => $slug],
+                [
+                    'name' => $name,
+                    'description' => "Role for $name",
+                ]
+            );
         }
 
         // Create permissions
@@ -60,14 +62,21 @@ class RolesAndPermissionsSeeder extends Seeder
             // Category management
             'manage-categories' => 'Manage Categories',
             'view-categories' => 'View Categories',
+            
+            // Analytics management
+            'view-analytics' => 'View Analytics Dashboard',
+            'manage-analytics' => 'Manage Analytics Settings',
+            'export-analytics' => 'Export Analytics Data',
         ];
 
         foreach ($permissions as $slug => $name) {
-            Permission::create([
-                'name' => $name,
-                'slug' => $slug,
-                'description' => "Permission to $name",
-            ]);
+            Permission::updateOrCreate(
+                ['slug' => $slug],
+                [
+                    'name' => $name,
+                    'description' => "Permission to $name",
+                ]
+            );
         }
 
         // Assign permissions to roles
@@ -78,13 +87,13 @@ class RolesAndPermissionsSeeder extends Seeder
         $viewer = Role::where('slug', 'viewer')->first();
 
         // Super Admin gets all permissions
-        $superAdmin->permissions()->attach(Permission::all());
+        $superAdmin->permissions()->sync(Permission::all());
 
-        // Admin gets all permissions except manage roles
-        $admin->permissions()->attach(Permission::where('slug', '!=', 'manage-roles')->get());
+        // Admin gets all permissions except manage roles and analytics
+        $admin->permissions()->sync(Permission::whereNotIn('slug', ['manage-roles', 'view-analytics', 'manage-analytics', 'export-analytics'])->get());
 
         // Manager permissions
-        $manager->permissions()->attach(Permission::whereIn('slug', [
+        $manager->permissions()->sync(Permission::whereIn('slug', [
             'view-users',
             'manage-teams',
             'view-teams',
@@ -100,7 +109,7 @@ class RolesAndPermissionsSeeder extends Seeder
         ])->get());
 
         // Member permissions
-        $member->permissions()->attach(Permission::whereIn('slug', [
+        $member->permissions()->sync(Permission::whereIn('slug', [
             'view-users',
             'view-teams',
             'view-objectives',
@@ -111,7 +120,7 @@ class RolesAndPermissionsSeeder extends Seeder
         ])->get());
 
         // Viewer permissions
-        $viewer->permissions()->attach(Permission::whereIn('slug', [
+        $viewer->permissions()->sync(Permission::whereIn('slug', [
             'view-users',
             'view-teams',
             'view-objectives',
