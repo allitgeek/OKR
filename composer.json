@@ -1,10 +1,25 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/laravel",
+    "name": "okr/management-system",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "description": "OKR (Objectives and Key Results) Management System - A comprehensive Laravel application for tracking organizational goals and progress.",
+    "keywords": [
+        "okr",
+        "objectives",
+        "key-results",
+        "laravel",
+        "management",
+        "goals",
+        "tracking"
+    ],
     "license": "MIT",
+    "version": "2.1.0",
+    "authors": [
+        {
+            "name": "OKR Development Team",
+            "email": "admin@example.com"
+        }
+    ],
     "require": {
         "php": "^8.2",
         "barryvdh/laravel-dompdf": "^3.1",
