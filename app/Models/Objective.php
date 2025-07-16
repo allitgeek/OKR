@@ -20,17 +20,34 @@ class Objective extends Model
         'user_id',
         'team_id',
         'creator_id',
+        'parent_objective_id',
+        'level',
         'start_date',
         'end_date',
         'status',
         'time_period',
+        'cycle_id',
+        'cycle_year',
+        'cycle_quarter',
         'progress',
+        'okr_score',
+        'confidence_level',
+        'okr_type',
+        'last_check_in',
+        'last_check_in_notes',
+        'is_measurable',
+        'is_specific',
     ];
 
     protected $casts = [
         'start_date' => 'date',
         'end_date' => 'date',
         'progress' => 'integer',
+        'okr_score' => 'decimal:2',
+        'confidence_level' => 'decimal:2',
+        'last_check_in' => 'datetime',
+        'is_measurable' => 'boolean',
+        'is_specific' => 'boolean',
     ];
 
     public $isUpdatingProgress = false;
@@ -63,6 +80,27 @@ class Objective extends Model
     public function comments(): MorphMany
     {
         return $this->morphMany(Comment::class, 'commentable');
+    }
+
+    // OKR Methodology Relationships
+    public function parentObjective(): BelongsTo
+    {
+        return $this->belongsTo(Objective::class, 'parent_objective_id');
+    }
+
+    public function childObjectives(): HasMany
+    {
+        return $this->hasMany(Objective::class, 'parent_objective_id');
+    }
+
+    public function cycle(): BelongsTo
+    {
+        return $this->belongsTo(OkrCycle::class, 'cycle_id', 'name');
+    }
+
+    public function checkIns(): HasMany
+    {
+        return $this->hasMany(OkrCheckIn::class);
     }
 
     protected static function booted()
@@ -133,5 +171,97 @@ class Objective extends Model
         } finally {
             $this->isUpdatingProgress = false;
         }
+    }
+
+    // OKR Methodology Methods
+    public function calculateOkrScore(): float
+    {
+        if ($this->keyResults()->count() === 0) {
+            return 0.0;
+        }
+
+        $totalScore = $this->keyResults->sum(function ($keyResult) {
+            return $keyResult->calculateOkrScore();
+        });
+
+        $score = $totalScore / $this->keyResults()->count();
+        $this->okr_score = round($score, 2);
+        $this->saveQuietly();
+
+        return $this->okr_score;
+    }
+
+    public function getOkrGrade(): string
+    {
+        $score = $this->okr_score ?? 0;
+        
+        if ($score >= 0.9) return 'A';
+        if ($score >= 0.7) return 'B'; // 0.7 is considered success in OKRs
+        if ($score >= 0.5) return 'C';
+        if ($score >= 0.3) return 'D';
+        return 'F';
+    }
+
+    public function isSuccessful(): bool
+    {
+        return ($this->okr_score ?? 0) >= 0.7;
+    }
+
+    public function isAspirationSuccessful(): bool
+    {
+        // For aspirational OKRs, 0.6-0.7 is considered good
+        return $this->okr_type === 'aspirational' && ($this->okr_score ?? 0) >= 0.6;
+    }
+
+    public function getConfidenceStatus(): string
+    {
+        $confidence = $this->confidence_level ?? 0.5;
+        
+        if ($confidence >= 0.8) return 'high';
+        if ($confidence >= 0.5) return 'medium';
+        return 'low';
+    }
+
+    public function needsAttention(): bool
+    {
+        return $this->confidence_level < 0.5 || 
+               ($this->okr_score !== null && $this->okr_score < 0.3);
+    }
+
+    public function createCheckIn(array $data): OkrCheckIn
+    {
+        return OkrCheckIn::createForObjective($this, $data);
+    }
+
+    public function getLatestCheckIn(): ?OkrCheckIn
+    {
+        return OkrCheckIn::getLatestForObjective($this);
+    }
+
+    // Scopes for OKR methodology
+    public function scopeForCycle($query, $cycleId)
+    {
+        return $query->where('cycle_id', $cycleId);
+    }
+
+    public function scopeByLevel($query, $level)
+    {
+        return $query->where('level', $level);
+    }
+
+    public function scopeByType($query, $type)
+    {
+        return $query->where('okr_type', $type);
+    }
+
+    public function scopeNeedsAttention($query)
+    {
+        return $query->where('confidence_level', '<', 0.5)
+                    ->orWhere('okr_score', '<', 0.3);
+    }
+
+    public function scopeSuccessful($query)
+    {
+        return $query->where('okr_score', '>=', 0.7);
     }
 }

@@ -7,6 +7,8 @@ use App\Http\Controllers\KeyResultController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\UserPermissionController;
 use App\Http\Controllers\AnalyticsController;
+use App\Http\Controllers\OkrCycleController;
+use App\Http\Controllers\OkrCheckInController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -59,6 +61,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/users/{user}/permissions', [UserPermissionController::class, 'update'])->name('users.permissions.update');
     Route::post('/users/{user}/super-admin', [UserPermissionController::class, 'assignSuperAdmin'])->name('users.permissions.super-admin');
     
+    // OKR Cycles Management
+    Route::resource('okr-cycles', OkrCycleController::class);
+    Route::post('okr-cycles/{cycle}/start', [OkrCycleController::class, 'startCycle'])->name('okr-cycles.start');
+    Route::post('okr-cycles/{cycle}/close', [OkrCycleController::class, 'closeCycle'])->name('okr-cycles.close');
+    Route::post('okr-cycles/initialize-year', [OkrCycleController::class, 'initializeYear'])->name('okr-cycles.initialize-year');
+    Route::get('okr-dashboard', [OkrCycleController::class, 'dashboard'])->name('okr.dashboard');
+
+    // OKR Check-ins
+    Route::resource('okr-check-ins', OkrCheckInController::class);
+    Route::post('okr-check-ins/quick', [OkrCheckInController::class, 'quickCheckIn'])->name('okr-check-ins.quick');
+
     // Analytics (Super Admin Only)
     Route::prefix('analytics')->name('analytics.')->middleware('can:view-analytics')->group(function () {
         Route::get('/dashboard', [AnalyticsController::class, 'dashboard'])->name('dashboard');
@@ -79,6 +92,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('export', [App\Http\Controllers\Api\AnalyticsController::class, 'export'])->middleware('can:export-analytics');
         Route::get('alerts', [App\Http\Controllers\Api\AnalyticsController::class, 'alerts']);
     });
+});
+
+// OKR Management Routes
+Route::middleware('auth')->group(function () {
+    // OKR Dashboard
+    Route::get('okr/dashboard', [App\Http\Controllers\OkrCycleController::class, 'dashboard'])->name('okr.dashboard');
+    
+    // OKR Cycles
+    Route::resource('okr-cycles', App\Http\Controllers\OkrCycleController::class);
+    Route::post('/okr-cycles/{cycle}/start', [App\Http\Controllers\OkrCycleController::class, 'start'])->name('okr-cycles.start');
+    Route::post('/okr-cycles/{cycle}/close', [App\Http\Controllers\OkrCycleController::class, 'close'])->name('okr-cycles.close');
+    Route::post('/okr-cycles/init/{year}', [App\Http\Controllers\OkrCycleController::class, 'initializeYear'])->name('okr-cycles.init');
+    
+    // OKR Check-ins
+    Route::resource('okr-check-ins', App\Http\Controllers\OkrCheckInController::class);
+    Route::post('/okr-check-ins/quick', [App\Http\Controllers\OkrCheckInController::class, 'quickCheckIn'])->name('okr-check-ins.quick');
 });
 
 Route::middleware('auth')->group(function () {

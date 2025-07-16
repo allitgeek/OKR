@@ -39,11 +39,24 @@ class ObjectiveController extends Controller
             'start_date' => 'required|date',
             'end_date' => 'required|date|after:start_date',
             'time_period' => 'required|in:monthly,quarterly,yearly',
+            'okr_type' => 'required|in:committed,aspirational',
+            'level' => 'required|in:company,team,individual',
+            'parent_objective_id' => 'nullable|exists:objectives,id',
+            'confidence_level' => 'required|numeric|min:0|max:1',
         ]);
 
         $validated['user_id'] = auth()->id();
+        $validated['creator_id'] = auth()->id();
         $validated['status'] = 'not_started';
         $validated['progress'] = 0;
+        
+        // Set cycle information from current cycle
+        $currentCycle = \App\Models\OkrCycle::getCurrent();
+        if ($currentCycle) {
+            $validated['cycle_id'] = $currentCycle->name;
+            $validated['cycle_year'] = $currentCycle->year;
+            $validated['cycle_quarter'] = $currentCycle->quarter;
+        }
 
         $objective = Objective::create($validated);
 

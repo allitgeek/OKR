@@ -14,6 +14,9 @@ class AppServiceProvider extends ServiceProvider
         error_reporting(0);
         ini_set('display_errors', '0');
         ini_set('display_startup_errors', '0');
+        
+        // Register OKR Service
+        $this->app->singleton(\App\Services\OkrService::class);
     }
 
     /**

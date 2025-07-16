@@ -39,6 +39,28 @@ Route::middleware('auth:sanctum')->group(function () {
         'destroy' => 'api.tasks.destroy',
     ]);
     Route::post('tasks/{task}/accept', [TaskController::class, 'accept'])->name('api.tasks.accept');
+    
+    // OKR Cycles API
+    Route::apiResource('okr-cycles', \App\Http\Controllers\Api\OkrCycleController::class)->names([
+        'index' => 'api.okr-cycles.index',
+        'store' => 'api.okr-cycles.store',
+        'show' => 'api.okr-cycles.show',
+        'update' => 'api.okr-cycles.update',
+        'destroy' => 'api.okr-cycles.destroy',
+    ]);
+    Route::post('okr-cycles/{cycle}/start', [\App\Http\Controllers\Api\OkrCycleController::class, 'startCycle'])->name('api.okr-cycles.start');
+    Route::get('okr-cycles/health/report', [\App\Http\Controllers\Api\OkrCycleController::class, 'healthReport'])->name('api.okr-cycles.health');
+    
+    // OKR Check-ins API
+    Route::apiResource('okr-check-ins', \App\Http\Controllers\Api\OkrCheckInController::class)->names([
+        'index' => 'api.okr-check-ins.index',
+        'store' => 'api.okr-check-ins.store',
+        'show' => 'api.okr-check-ins.show',
+        'update' => 'api.okr-check-ins.update',
+        'destroy' => 'api.okr-check-ins.destroy',
+    ]);
+    Route::post('okr-check-ins/quick', [\App\Http\Controllers\Api\OkrCheckInController::class, 'quickCheckIn'])->name('api.okr-check-ins.quick');
+    Route::get('okr-check-ins/analytics', [\App\Http\Controllers\Api\OkrCheckInController::class, 'analytics'])->name('api.okr-check-ins.analytics');
     Route::post('tasks/{task}/reject', [TaskController::class, 'reject'])->name('api.tasks.reject');
     Route::post('tasks/{task}/complete', [TaskController::class, 'complete'])->name('api.tasks.complete');
 });

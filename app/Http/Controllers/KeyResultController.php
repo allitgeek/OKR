@@ -39,6 +39,9 @@ class KeyResultController extends Controller
             'owner_id' => ['required', 'exists:users,id'],
             'target_value' => ['required', 'numeric', 'min:0'],
             'current_value' => ['required', 'numeric', 'min:0'],
+            'metric_unit' => ['nullable', 'string', 'max:50'],
+            'kr_type' => ['required', 'in:positive,negative,baseline,milestone'],
+            'confidence_level' => ['required', 'numeric', 'min:0', 'max:1'],
             'start_date' => [
                 'required', 
                 'date',

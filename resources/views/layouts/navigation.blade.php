@@ -20,6 +20,9 @@
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" class="text-gray-300 hover:text-white">
                         {{ __('Dashboard') }}
                     </x-nav-link>
+                    <x-nav-link :href="route('okr.dashboard')" :active="request()->routeIs('okr.*')" class="text-gray-300 hover:text-white">
+                        🎯 {{ __('OKR Dashboard') }}
+                    </x-nav-link>
                     <x-nav-link :href="route('objectives.index')" :active="request()->routeIs('objectives.*')" class="text-gray-300 hover:text-white">
                         {{ __('Objectives') }}
                     </x-nav-link>

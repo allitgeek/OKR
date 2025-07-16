@@ -11,6 +11,8 @@ class Kernel extends ConsoleKernel
         Commands\EscalateOverdueTasks::class,
         Commands\MakeSuperAdmin::class,
         Commands\CalculateAnalytics::class,
+        Commands\InitializeOkrCycle::class,
+        Commands\StartOkrCycle::class,
     ];
 
     protected function schedule(Schedule $schedule): void
