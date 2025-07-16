@@ -19,11 +19,19 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', function () {
-    return view('welcome');
+    if (auth()->check()) {
+        return redirect()->route('dashboard');
+    }
+    return redirect()->route('login');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    
+    // Debug route (temporary)
+    Route::get('/debug-user', function () {
+        return view('debug-user');
+    })->name('debug.user');
     
     // User Management
     Route::post('/users/create', [UserPermissionController::class, 'createUser'])->name('users.create');
