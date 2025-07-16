@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\Objective;
 use App\Models\Task;
+use App\Models\OkrCycle;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
@@ -52,6 +54,26 @@ class DashboardController extends Controller
             'end_date' => 'required|date|after_or_equal:start_date'
         ]);
 
+        // Get current or active OKR cycle for automatic assignment
+        $currentCycle = OkrCycle::getCurrent();
+        if (!$currentCycle) {
+            $currentCycle = OkrCycle::active()->first();
+        }
+
+        // If still no cycle, create one for the current quarter
+        if (!$currentCycle) {
+            $now = Carbon::now();
+            $currentCycle = OkrCycle::create([
+                'name' => "Q{$now->quarter}-{$now->year}",
+                'year' => $now->year,
+                'quarter' => $now->quarter,
+                'start_date' => $now->startOfQuarter(),
+                'end_date' => $now->endOfQuarter(),
+                'status' => 'active',
+                'description' => "Auto-created Q{$now->quarter} {$now->year} OKR Cycle"
+            ]);
+        }
+
         $objective = Objective::create([
             'title' => $validated['title'],
             'description' => $validated['description'],
@@ -61,7 +83,12 @@ class DashboardController extends Controller
             'end_date' => $validated['end_date'],
             'status' => 'not_started',
             'time_period' => 'quarterly',
-            'progress' => 0
+            'progress' => 0,
+            'company_id' => auth()->user()->company_id,
+            // Automatically assign to current cycle
+            'cycle_id' => $currentCycle->name,
+            'cycle_year' => $currentCycle->year,
+            'cycle_quarter' => $currentCycle->quarter,
         ]);
 
         return back()->with('success', 'Objective created successfully.');

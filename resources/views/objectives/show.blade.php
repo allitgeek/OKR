@@ -8,25 +8,29 @@
                 <p class="mt-1 text-sm text-gray-600">Created {{ $objective->created_at->diffForHumans() }}</p>
             </div>
             <div class="flex items-center space-x-3">
-                <a href="{{ route('objectives.edit', $objective) }}" 
-                   class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-150">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                    </svg>
-                    {{ __('Edit Objective') }}
-                </a>
-                <form action="{{ route('objectives.destroy', $objective) }}" method="POST" class="inline">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" 
-                            class="inline-flex items-center px-4 py-2 bg-white border border-red-300 rounded-lg text-sm font-medium text-red-700 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-150"
-                            onclick="return confirm('Are you sure you want to delete this objective?')">
+                @can('update', $objective)
+                    <a href="{{ route('objectives.edit', $objective) }}"
+                       class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-150">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                         </svg>
-                        {{ __('Delete') }}
-                    </button>
-                </form>
+                        {{ __('Edit Objective') }}
+                    </a>
+                @endcan
+                @can('delete', $objective)
+                    <form action="{{ route('objectives.destroy', $objective) }}" method="POST" class="inline">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit"
+                                class="inline-flex items-center px-4 py-2 bg-white border border-red-300 rounded-lg text-sm font-medium text-red-700 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-150"
+                                onclick="return confirm('Are you sure you want to delete this objective?')">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                            {{ __('Delete') }}
+                        </button>
+                    </form>
+                @endcan
             </div>
         </div>
     </x-slot>
@@ -44,6 +48,18 @@
                         <div>
                             <h3 class="text-lg font-medium text-gray-900 mb-2">{{ __('Details') }}</h3>
                             <dl class="space-y-2">
+                                <div class="flex justify-between">
+                                    <dt class="text-gray-600">OKR Cycle</dt>
+                                    <dd class="font-medium text-indigo-600">
+                                        @if($objective->cycle_id)
+                                            <a href="{{ route('okr-cycles.index') }}" class="hover:text-indigo-700">
+                                                {{ $objective->cycle_id }}
+                                            </a>
+                                        @else
+                                            <span class="text-gray-500">Not assigned</span>
+                                        @endif
+                                    </dd>
+                                </div>
                                 <div class="flex justify-between">
                                     <dt class="text-gray-600">Time Period</dt>
                                     <dd class="font-medium text-gray-900">{{ ucfirst($objective->time_period) }}</dd>
@@ -104,45 +120,60 @@
                                         @endif
                                     </div>
                                     <div class="flex items-center space-x-2">
-                                        <button type="button" 
-                                            x-data
-                                            @click="$dispatch('open-modal', 'update-progress-{{ $keyResult->id }}')" 
-                                            class="text-gray-600 hover:text-blue-600 transition-colors duration-150 p-1 rounded-full hover:bg-blue-100" 
-                                            title="Update Progress">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                                            </svg>
-                                        </button>
-                                        <button type="button" 
-                                            onclick="markComplete('{{ $keyResult->id }}')" 
-                                            class="text-gray-600 hover:text-green-600 transition-colors duration-150 p-1 rounded-full hover:bg-green-100" 
-                                            title="Mark Complete">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                            </svg>
-                                        </button>
-                                        <a href="{{ route('key-results.edit', $keyResult) }}" 
-                                           class="text-gray-600 hover:text-blue-600 transition-colors duration-150 p-1 rounded-full hover:bg-blue-100" 
-                                           title="Edit">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                                            </svg>
-                                        </a>
-                                        <form action="{{ route('key-results.destroy', $keyResult) }}" method="POST" class="inline">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" 
-                                                class="text-gray-600 hover:text-red-600 transition-colors duration-150 p-1 rounded-full hover:bg-red-100" 
-                                                title="Delete" 
-                                                onclick="return confirm('Are you sure you want to delete this key result?')">
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                                </svg>
+                                        @can('updateProgress', $keyResult)
+                                            <button type="button"
+                                                x-data
+                                                @click="$dispatch('open-modal', 'update-progress-{{ $keyResult->id }}')"
+                                                class="text-gray-600 hover:text-blue-600 transition-colors duration-150 p-1 rounded-full hover:bg-blue-100"
+                                                title="Update Progress">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                                             </button>
-                                        </form>
+                                            <button type="button"
+                                                onclick="markComplete('{{ $keyResult->id }}')"
+                                                class="text-gray-600 hover:text-green-600 transition-colors duration-150 p-1 rounded-full hover:bg-green-100"
+                                                title="Mark Complete">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                            </button>
+                                        @else
+                                            <button type="button" onclick="alert('You do not have permission to update this Key Result\'s progress.')" class="text-gray-400 cursor-not-allowed p-1 rounded-full" title="Update Progress (disabled)">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                            </button>
+                                            <button type="button" onclick="alert('You do not have permission to update this Key Result\'s progress.')" class="text-gray-400 cursor-not-allowed p-1 rounded-full" title="Mark Complete (disabled)">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                            </button>
+                                        @endcan
+
+                                        @can('update', $keyResult)
+                                            <a href="{{ route('key-results.edit', $keyResult) }}"
+                                               class="text-gray-600 hover:text-blue-600 transition-colors duration-150 p-1 rounded-full hover:bg-blue-100"
+                                               title="Edit">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                            </a>
+                                        @else
+                                            <button type="button" onclick="alert('You do not have permission to edit this Key Result.')" class="text-gray-400 cursor-not-allowed p-1 rounded-full" title="Edit (disabled)">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                            </button>
+                                        @endcan
+
+                                        @can('delete', $keyResult)
+                                            <form action="{{ route('key-results.destroy', $keyResult) }}" method="POST" class="inline">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit"
+                                                    class="text-gray-600 hover:text-red-600 transition-colors duration-150 p-1 rounded-full hover:bg-red-100"
+                                                    title="Delete"
+                                                    onclick="return confirm('Are you sure you want to delete this key result?')">
+                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                </button>
+                                            </form>
+                                        @else
+                                            <button type="button" onclick="alert('You do not have permission to delete this Key Result.')" class="text-gray-400 cursor-not-allowed p-1 rounded-full" title="Delete (disabled)">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                            </button>
+                                        @endcan
                                     </div>
                                 </div>
-                                
+
                                 <div class="space-y-3">
                                     <div class="flex items-center">
                                         <div class="flex-grow">
@@ -155,7 +186,7 @@
                                                     }
                                                     $progressPercent = max(0, min(100, $progressPercent));
                                                 @endphp
-                                                <div class="h-2 {{ $progressPercent >= 100 ? 'bg-green-500' : 'bg-blue-500' }} rounded-full transition-all duration-300 ease-in-out" 
+                                                <div class="h-2 {{ $progressPercent >= 100 ? 'bg-green-500' : 'bg-blue-500' }} rounded-full transition-all duration-300 ease-in-out"
                                                      style="width: {{ $progressPercent }}%">
                                                 </div>
                                             </div>
@@ -184,7 +215,7 @@
                                 <form method="POST" action="{{ route('key-results.update-progress', $keyResult) }}" class="p-6">
                                     @csrf
                                     @method('PATCH')
-                                    
+
                                     <h2 class="text-lg font-medium text-gray-900 mb-4">
                                         Update Progress for "{{ $keyResult->title }}"
                                     </h2>
@@ -212,11 +243,11 @@
 
                                     <div>
                                         <x-input-label for="current_value_{{ $keyResult->id }}" :value="__('Current Value')" />
-                                        <x-text-input 
-                                            id="current_value_{{ $keyResult->id }}" 
-                                            name="current_value" 
-                                            type="number" 
-                                            class="mt-1 block w-full" 
+                                        <x-text-input
+                                            id="current_value_{{ $keyResult->id }}"
+                                            name="current_value"
+                                            type="number"
+                                            class="mt-1 block w-full"
                                             :value="old('current_value', $keyResult->current_value)"
                                             required
                                             min="0"
@@ -225,21 +256,21 @@
                                             autofocus
                                         />
                                         <div class="mt-2 flex space-x-2">
-                                            <button type="button" 
-                                                class="quick-value-btn px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded-md transition-colors duration-150" 
-                                                data-target="{{ $keyResult->target_value }}" 
+                                            <button type="button"
+                                                class="quick-value-btn px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded-md transition-colors duration-150"
+                                                data-target="{{ $keyResult->target_value }}"
                                                 data-value="25">25%</button>
-                                            <button type="button" 
-                                                class="quick-value-btn px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded-md transition-colors duration-150" 
-                                                data-target="{{ $keyResult->target_value }}" 
+                                            <button type="button"
+                                                class="quick-value-btn px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded-md transition-colors duration-150"
+                                                data-target="{{ $keyResult->target_value }}"
                                                 data-value="50">50%</button>
-                                            <button type="button" 
-                                                class="quick-value-btn px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded-md transition-colors duration-150" 
-                                                data-target="{{ $keyResult->target_value }}" 
+                                            <button type="button"
+                                                class="quick-value-btn px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded-md transition-colors duration-150"
+                                                data-target="{{ $keyResult->target_value }}"
                                                 data-value="75">75%</button>
-                                            <button type="button" 
-                                                class="quick-value-btn px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded-md transition-colors duration-150" 
-                                                data-target="{{ $keyResult->target_value }}" 
+                                            <button type="button"
+                                                class="quick-value-btn px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded-md transition-colors duration-150"
+                                                data-target="{{ $keyResult->target_value }}"
                                                 data-value="100">100%</button>
                                         </div>
                                         <x-input-error class="mt-2" :messages="$errors->get('current_value')" />
@@ -306,7 +337,7 @@
                                         @if($task->status !== 'completed')
                                             <form action="{{ route('tasks.complete', $task) }}" method="POST" class="inline">
                                                 @csrf
-                                                <button type="submit" 
+                                                <button type="submit"
                                                     class="text-gray-600 hover:text-green-600 transition-colors duration-150 p-1 rounded-full hover:bg-green-100"
                                                     title="Complete Task">
                                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -352,18 +383,18 @@
                     const form = document.createElement('form');
                     form.method = 'POST';
                     form.action = `/key-results/${keyResultId}/complete`;
-                    
+
                     const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
                     const csrfInput = document.createElement('input');
                     csrfInput.type = 'hidden';
                     csrfInput.name = '_token';
                     csrfInput.value = csrfToken;
-                    
+
                     const methodInput = document.createElement('input');
                     methodInput.type = 'hidden';
                     methodInput.name = '_method';
                     methodInput.value = 'PATCH';
-                    
+
                     form.appendChild(csrfInput);
                     form.appendChild(methodInput);
                     document.body.appendChild(form);

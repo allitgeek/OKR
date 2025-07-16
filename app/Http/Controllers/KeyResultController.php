@@ -96,6 +96,8 @@ class KeyResultController extends Controller
 
     public function updateProgress(Request $request, KeyResult $keyResult)
     {
+        $this->authorize('updateProgress', $keyResult);
+
         try {
             $validated = $request->validate([
                 'current_value' => ['required', 'numeric', 'min:0', 'max:' . $keyResult->target_value],
@@ -119,7 +121,7 @@ class KeyResultController extends Controller
 
     public function markComplete(KeyResult $keyResult)
     {
-        $this->authorize('update', $keyResult);
+        $this->authorize('updateProgress', $keyResult);
 
         $keyResult->update([
             'current_value' => $keyResult->target_value,

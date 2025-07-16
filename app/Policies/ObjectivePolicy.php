@@ -10,7 +10,7 @@ class ObjectivePolicy
 {
     public function before(User $user, string $ability): bool|null
     {
-        if ($user->hasPermission('view-all-objectives')) {
+        if ($user->hasRole('super-admin')) {
             return true;
         }
         return null;
@@ -21,7 +21,8 @@ class ObjectivePolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->hasPermission('view-objectives');
+        // Any authenticated user can view the list of objectives within their company
+        return true;
     }
 
     /**
@@ -29,15 +30,8 @@ class ObjectivePolicy
      */
     public function view(User $user, Objective $objective): bool
     {
-        if ($user->hasPermission('view-all-objectives')) {
-            return true;
-        }
-
-        if ($objective->user_id === $user->id) {
-            return true;
-        }
-
-        return $objective->keyResults()->where('assignee_id', $user->id)->exists();
+        // Users can view any objective within their own company.
+        return $user->company_id === $objective->company_id;
     }
 
     /**
@@ -53,10 +47,7 @@ class ObjectivePolicy
      */
     public function update(User $user, Objective $objective): bool
     {
-        if ($user->hasPermission('view-all-objectives')) {
-            return true;
-        }
-        return $objective->user_id === $user->id && $user->hasPermission('manage-objectives');
+        return $user->id === $objective->user_id && $user->hasPermission('manage-objectives');
     }
 
     /**
@@ -64,9 +55,6 @@ class ObjectivePolicy
      */
     public function delete(User $user, Objective $objective): bool
     {
-        if ($user->hasPermission('view-all-objectives')) {
-            return true;
-        }
-        return $objective->user_id === $user->id && $user->hasPermission('manage-objectives');
+        return $user->id === $objective->user_id && $user->hasPermission('manage-objectives');
     }
 }

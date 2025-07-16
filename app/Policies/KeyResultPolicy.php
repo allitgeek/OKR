@@ -10,7 +10,7 @@ class KeyResultPolicy
 {
     public function before(User $user, string $ability): bool|null
     {
-        if ($user->hasPermission('view-all-objectives')) {
+        if ($user->hasRole('super-admin')) {
             return true;
         }
         return null;
@@ -21,7 +21,7 @@ class KeyResultPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->hasPermission('view-objectives');
+        return true;
     }
 
     /**
@@ -29,12 +29,7 @@ class KeyResultPolicy
      */
     public function view(User $user, KeyResult $keyResult): bool
     {
-        if ($user->hasPermission('view-all-objectives')) {
-            return true;
-        }
-        return $keyResult->objective->user_id === $user->id || 
-               $keyResult->owner_id === $user->id || 
-               $user->hasPermission('view-objectives');
+        return $user->company_id === $keyResult->objective->company_id;
     }
 
     /**
@@ -42,6 +37,7 @@ class KeyResultPolicy
      */
     public function create(User $user): bool
     {
+        // This is typically handled by checking if the user can update the parent objective
         return $user->hasPermission('manage-objectives');
     }
 
@@ -50,12 +46,19 @@ class KeyResultPolicy
      */
     public function update(User $user, KeyResult $keyResult): bool
     {
-        if ($user->hasPermission('view-all-objectives')) {
-            return true;
-        }
-        return ($keyResult->objective->user_id === $user->id || 
-                $keyResult->owner_id === $user->id) && 
-               $user->hasPermission('manage-objectives');
+        // Only the owner of the parent objective can edit the KR's definition
+        return $user->id === $keyResult->objective->user_id &&
+               $user->hasPermission('manage-key-results');
+    }
+
+    /**
+     * Determine whether the user can update the progress of the model.
+     */
+    public function updateProgress(User $user, KeyResult $keyResult): bool
+    {
+        // The objective owner or the KR assignee can update its progress
+        return ($user->id === $keyResult->objective->user_id || $user->id === $keyResult->assignee_id) &&
+               $user->hasPermission('manage-key-results');
     }
 
     /**
@@ -63,10 +66,7 @@ class KeyResultPolicy
      */
     public function delete(User $user, KeyResult $keyResult): bool
     {
-        if ($user->hasPermission('view-all-objectives')) {
-            return true;
-        }
-        return $keyResult->objective->user_id === $user->id && 
-               $user->hasPermission('manage-objectives');
+        return $user->id === $keyResult->objective->user_id &&
+               $user->hasPermission('manage-key-results');
     }
 } 

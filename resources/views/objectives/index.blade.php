@@ -67,7 +67,7 @@
                     <button id="clear-filters" class="text-sm text-gray-500 hover:text-gray-700 font-medium">Clear All</button>
                 </div>
                 
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                     <!-- Status Filter -->
                     <div>
                         <label class="block text-xs font-medium text-gray-700 mb-1">Status</label>
@@ -104,6 +104,18 @@
                             <option value="51-75">51% - 75%</option>
                             <option value="76-99">76% - 99%</option>
                             <option value="100">100%</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Cycle Filter -->
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">OKR Cycle</label>
+                        <select id="cycle-filter" class="w-full text-sm border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <option value="all">All Cycles</option>
+                            @foreach($objectives->pluck('cycle_id')->unique()->filter() as $cycle)
+                                <option value="{{ $cycle }}">{{ $cycle }}</option>
+                            @endforeach
+                            <option value="unassigned">Not Assigned</option>
                         </select>
                     </div>
                     
@@ -150,6 +162,7 @@
                          data-updated="{{ $objective->updated_at->format('Y-m-d') }}"
                          data-due-date="{{ $objective->end_date ? $objective->end_date->format('Y-m-d') : '' }}"
                          data-title="{{ strtolower($objective->title) }}"
+                         data-cycle="{{ $objective->cycle_id ?? 'unassigned' }}"
                          data-current-user="{{ auth()->id() }}"
                          >
                         <div class="p-6">
@@ -216,6 +229,12 @@
                             </div>
 
                             <div class="space-y-3">
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">OKR Cycle</span>
+                                    <span class="font-medium text-indigo-600">
+                                        {{ $objective->cycle_id ?? 'Not assigned' }}
+                                    </span>
+                                </div>
                                 <div class="flex justify-between text-sm">
                                     <span class="text-gray-600">Time Period</span>
                                     <span class="font-medium text-gray-900">{{ ucfirst($objective->time_period) }}</span>
@@ -370,6 +389,7 @@
             const statusFilter = document.getElementById('status-filter');
             const timeFilter = document.getElementById('time-filter');
             const progressFilter = document.getElementById('progress-filter');
+            const cycleFilter = document.getElementById('cycle-filter');
             const ownerFilter = document.getElementById('owner-filter');
             const clearFiltersBtn = document.getElementById('clear-filters');
             const resultsCount = document.getElementById('results-count');
@@ -385,12 +405,14 @@
                 const statusValue = statusFilter.value;
                 const timeValue = timeFilter.value;
                 const progressValue = progressFilter.value;
+                const cycleValue = cycleFilter.value;
                 const ownerValue = ownerFilter.value;
                 const currentUserId = document.querySelector('.objective-card')?.dataset.currentUser;
 
                 filteredCards = allCards.filter(card => {
                     const progress = parseFloat(card.dataset.progress);
                     const ownerId = card.dataset.ownerId;
+                    const cycle = card.dataset.cycle;
                     const dueDate = card.dataset.dueDate;
                     const createdDate = card.dataset.created;
                     const updatedDate = card.dataset.updated;
@@ -436,6 +458,12 @@
                         if (progressValue === '51-75' && (progress < 51 || progress > 75)) return false;
                         if (progressValue === '76-99' && (progress < 76 || progress > 99)) return false;
                         if (progressValue === '100' && progress < 100) return false;
+                    }
+
+                    // Cycle filter
+                    if (cycleValue !== 'all') {
+                        if (cycleValue === 'unassigned' && cycle !== 'unassigned') return false;
+                        if (cycleValue !== 'unassigned' && cycle !== cycleValue) return false;
                     }
 
                     // Owner filter
@@ -522,6 +550,7 @@
                 statusFilter.value = 'all';
                 timeFilter.value = 'all';
                 progressFilter.value = 'all';
+                cycleFilter.value = 'all';
                 ownerFilter.value = 'all';
                 
                 filteredCards = [...allCards];
@@ -548,6 +577,7 @@
             if (statusFilter) statusFilter.addEventListener('change', applyFilters);
             if (timeFilter) timeFilter.addEventListener('change', handleTimeFilter);
             if (progressFilter) progressFilter.addEventListener('change', applyFilters);
+            if (cycleFilter) cycleFilter.addEventListener('change', applyFilters);
             if (ownerFilter) ownerFilter.addEventListener('change', applyFilters);
             if (clearFiltersBtn) clearFiltersBtn.addEventListener('click', clearAllFilters);
             if (sortAlphaBtn) sortAlphaBtn.addEventListener('click', () => sortCards('alpha'));
