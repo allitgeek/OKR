@@ -12,6 +12,32 @@
                     <form method="POST" action="{{ route('objectives.store') }}" class="space-y-6">
                         @csrf
 
+                        <!-- Cycle Assignment Info -->
+                        @php
+                            $currentCycle = \App\Models\OkrCycle::getCurrent();
+                            if (!$currentCycle) {
+                                $currentCycle = \App\Models\OkrCycle::active()->first();
+                            }
+                            if (!$currentCycle) {
+                                $now = \Carbon\Carbon::now();
+                                $cycleName = "Q{$now->quarter}-{$now->year}";
+                            } else {
+                                $cycleName = $currentCycle->name;
+                            }
+                        @endphp
+                        
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <div class="flex items-center">
+                                <svg class="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <div>
+                                    <h4 class="text-sm font-medium text-blue-800">Automatic Cycle Assignment</h4>
+                                    <p class="text-sm text-blue-700">This objective will be automatically linked to the <strong>{{ $cycleName }}</strong> OKR cycle for proper tracking and reporting.</p>
+                                </div>
+                            </div>
+                        </div>
+
                         <div>
                             <x-input-label for="title" :value="__('Title')" />
                             <x-text-input id="title" name="title" type="text" class="mt-1 block w-full" :value="old('title')" required autofocus />

@@ -24,9 +24,8 @@
         </div>
 
         <!-- Current & Active Cycle Status -->
-        @if($currentCycle || $activeCycle)
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            @if($currentCycle)
+        @if($currentCycle)
+        <div class="mb-8">
             <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
                 <div class="flex items-center justify-between">
                     <div>
@@ -45,20 +44,19 @@
                     </div>
                 </div>
             </div>
-            @endif
+        </div>
+        @endif
 
-            @if($activeCycle && $activeCycle->id !== $currentCycle?->id)
-            <div class="bg-green-50 border border-green-200 rounded-lg p-6">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h3 class="text-lg font-semibold text-green-900">Active Cycle</h3>
-                        <p class="text-green-700 font-bold">{{ $activeCycle->name }}</p>
-                        <p class="text-sm text-green-600 mt-1">Status: {{ ucfirst($activeCycle->status) }}</p>
-                    </div>
-                    <div class="text-2xl">🎯</div>
+        @if($activeCycle && $activeCycle->id !== $currentCycle?->id)
+        <div class="bg-green-50 border border-green-200 rounded-lg p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg font-semibold text-green-900">Active Cycle</h3>
+                    <p class="text-green-700 font-bold">{{ $activeCycle->name }}</p>
+                    <p class="text-sm text-green-600 mt-1">Status: {{ ucfirst($activeCycle->status) }}</p>
                 </div>
+                <div class="text-2xl">🎯</div>
             </div>
-            @endif
         </div>
         @endif
 

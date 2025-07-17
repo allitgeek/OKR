@@ -100,19 +100,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 });
 
-// OKR Management Routes
-Route::middleware('auth')->group(function () {
-    // OKR Cycles
-    Route::resource('okr-cycles', App\Http\Controllers\OkrCycleController::class);
-    Route::post('/okr-cycles/{cycle}/start', [App\Http\Controllers\OkrCycleController::class, 'start'])->name('okr-cycles.start');
-    Route::post('/okr-cycles/{cycle}/close', [App\Http\Controllers\OkrCycleController::class, 'close'])->name('okr-cycles.close');
-    Route::post('/okr-cycles/init/{year}', [App\Http\Controllers\OkrCycleController::class, 'initializeYear'])->name('okr-cycles.init');
-    
-    // OKR Check-ins
-    Route::resource('okr-check-ins', App\Http\Controllers\OkrCheckInController::class);
-    Route::post('/okr-check-ins/quick', [App\Http\Controllers\OkrCheckInController::class, 'quickCheckIn'])->name('okr-check-ins.quick');
-});
-
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

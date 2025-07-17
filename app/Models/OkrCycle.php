@@ -81,6 +81,10 @@ class OkrCycle extends Model
 
     public function getDaysRemaining(): int
     {
+        if (!$this->end_date) {
+            return 0;
+        }
+        
         if ($this->end_date < Carbon::now()) {
             return 0;
         }
@@ -89,12 +93,26 @@ class OkrCycle extends Model
 
     public function getProgressPercentage(): float
     {
-        $totalDays = $this->start_date->diffInDays($this->end_date);
-        $elapsedDays = $this->start_date->diffInDays(Carbon::now());
-        
-        if ($totalDays === 0) return 100;
-        
-        return min(100, max(0, ($elapsedDays / $totalDays) * 100));
+        // Check if dates are properly set
+        if (!$this->start_date || !$this->end_date) {
+            return 0;
+        }
+
+        try {
+            $totalDays = $this->start_date->diffInDays($this->end_date);
+            $elapsedDays = $this->start_date->diffInDays(Carbon::now());
+            
+            // Guard against division by zero
+            if ($totalDays <= 0) {
+                return 100;
+            }
+            
+            return min(100, max(0, ($elapsedDays / $totalDays) * 100));
+        } catch (\Exception $e) {
+            // Log the error and return a safe default
+            \Log::warning('Error calculating OKR cycle progress percentage: ' . $e->getMessage());
+            return 0;
+        }
     }
 
     // Static methods

@@ -26,6 +26,9 @@ class Objective extends Model
         'start_date',
         'end_date',
         'company_id',
+        'cycle_id',
+        'cycle_year',
+        'cycle_quarter',
     ];
 
     protected $casts = [

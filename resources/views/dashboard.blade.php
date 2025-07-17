@@ -38,9 +38,14 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex justify-between items-center">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                {{ __('Dashboard') }}
-            </h2>
+            <div>
+                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                    {{ $dashboardContext['personalization']['title'] ?? 'Dashboard' }}
+                </h2>
+                @if(isset($dashboardContext['personalization']['description']))
+                <p class="text-sm text-gray-600 mt-1">{{ $dashboardContext['personalization']['description'] }}</p>
+                @endif
+            </div>
             @can('manage-users')
             <div class="flex space-x-3">
                 <button x-data @click="$dispatch('open-modal', 'create-objective')" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 inline-flex items-center">
@@ -65,6 +70,89 @@
 
     <div class="py-8">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Personalized Welcome Section -->
+            @if(isset($dashboardContext['involvement']))
+            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6 mb-8">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">
+                            Welcome back, {{ auth()->user()->name }}!
+                        </h3>
+                        <p class="text-gray-600 mb-4">{{ $dashboardContext['personalization']['description'] ?? 'Here\'s your personalized OKR overview.' }}</p>
+                        
+                        <!-- Role-based involvement stats -->
+                        <div class="flex flex-wrap gap-4 text-sm">
+                            @if($dashboardContext['involvement']['owned_objectives'] > 0)
+                            <span class="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-800 rounded-full">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                {{ $dashboardContext['involvement']['owned_objectives'] }} Objectives
+                            </span>
+                            @endif
+                            
+                            @if($dashboardContext['involvement']['assigned_key_results'] > 0)
+                            <span class="inline-flex items-center px-3 py-1 bg-green-100 text-green-800 rounded-full">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                </svg>
+                                {{ $dashboardContext['involvement']['assigned_key_results'] }} Key Results
+                            </span>
+                            @endif
+                            
+                            @if($dashboardContext['involvement']['assigned_tasks'] > 0)
+                            <span class="inline-flex items-center px-3 py-1 bg-purple-100 text-purple-800 rounded-full">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+                                </svg>
+                                {{ $dashboardContext['involvement']['assigned_tasks'] }} Tasks
+                            </span>
+                            @endif
+                            
+                            @if($dashboardContext['involvement']['overdue_tasks'] > 0)
+                            <span class="inline-flex items-center px-3 py-1 bg-red-100 text-red-800 rounded-full">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                                </svg>
+                                {{ $dashboardContext['involvement']['overdue_tasks'] }} Overdue
+                            </span>
+                            @endif
+                        </div>
+                    </div>
+                    
+                    <!-- Role-specific quick actions -->
+                    @if($dashboardContext['personalization']['focus'] === 'strategic')
+                    <div class="text-right">
+                        <span class="inline-flex items-center px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm font-medium">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.5-1.5a11 11 0 11-22 0 11 11 0 0122 0z"></path>
+                            </svg>
+                            Strategic View
+                        </span>
+                    </div>
+                    @elseif($dashboardContext['personalization']['focus'] === 'team')
+                    <div class="text-right">
+                        <span class="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                            </svg>
+                            Team Manager
+                        </span>
+                    </div>
+                    @else
+                    <div class="text-right">
+                        <span class="inline-flex items-center px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                            </svg>
+                            Personal View
+                        </span>
+                    </div>
+                    @endif
+                </div>
+            </div>
+            @endif
+
             @if (session('success'))
                 <div x-data="{ show: true }" 
                      x-show="show" 
@@ -106,59 +194,59 @@
             @endif
 
             <!-- Dashboard Stats -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <div class="flex items-center">
-                        <div class="p-3 rounded-full bg-blue-100">
-                            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 mb-8">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 hover:shadow-md transition-all duration-200 mobile-stat-card">
+                    <div class="flex items-center space-x-4">
+                        <div class="p-3 rounded-full bg-blue-100 touch-target-sm flex-shrink-0">
+                            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                             </svg>
                         </div>
-                        <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-600">Total Objectives</p>
-                            <p class="text-2xl font-semibold text-gray-900">{{ $objectives->count() }}</p>
+                        <div>
+                            <p class="text-xs sm:text-sm font-medium text-gray-600">Total Objectives</p>
+                            <p class="text-lg sm:text-2xl font-semibold text-gray-900">{{ $objectives->count() }}</p>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <div class="flex items-center">
-                        <div class="p-3 rounded-full bg-green-100">
-                            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 hover:shadow-md transition-all duration-200 mobile-stat-card">
+                    <div class="flex items-center space-x-4">
+                        <div class="p-3 rounded-full bg-green-100 touch-target-sm flex-shrink-0">
+                            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
                         </div>
-                        <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-600">Completed</p>
-                            <p class="text-2xl font-semibold text-gray-900">{{ $objectives->where('progress', '>=', 100)->count() }}</p>
+                        <div>
+                            <p class="text-xs sm:text-sm font-medium text-gray-600">Completed</p>
+                            <p class="text-lg sm:text-2xl font-semibold text-gray-900">{{ $objectives->where('progress', '>=', 100)->count() }}</p>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <div class="flex items-center">
-                        <div class="p-3 rounded-full bg-purple-100">
-                            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 hover:shadow-md transition-all duration-200 mobile-stat-card">
+                    <div class="flex items-center space-x-4">
+                        <div class="p-3 rounded-full bg-purple-100 touch-target-sm flex-shrink-0">
+                            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                             </svg>
                         </div>
-                        <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-600">Active Tasks</p>
-                            <p class="text-2xl font-semibold text-gray-900">{{ $tasks->where('status', '!=', 'completed')->count() }}</p>
+                        <div>
+                            <p class="text-xs sm:text-sm font-medium text-gray-600">Active Tasks</p>
+                            <p class="text-lg sm:text-2xl font-semibold text-gray-900">{{ $tasks->where('status', '!=', 'completed')->count() }}</p>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <div class="flex items-center">
-                        <div class="p-3 rounded-full bg-yellow-100">
-                            <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 hover:shadow-md transition-all duration-200 mobile-stat-card">
+                    <div class="flex items-center space-x-4">
+                        <div class="p-3 rounded-full bg-yellow-100 touch-target-sm flex-shrink-0">
+                            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                             </svg>
                         </div>
-                        <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-600">Team Members</p>
-                            <p class="text-2xl font-semibold text-gray-900">{{ isset($users) ? $users->count() : 0 }}</p>
+                        <div>
+                            <p class="text-xs sm:text-sm font-medium text-gray-600">Team Members</p>
+                            <p class="text-lg sm:text-2xl font-semibold text-gray-900">{{ isset($users) ? $users->count() : 0 }}</p>
                         </div>
                     </div>
                 </div>
@@ -167,7 +255,26 @@
             <!-- Recent Objectives Section -->
             <div class="mb-8">
                 <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-lg font-semibold text-gray-900">Recent Objectives</h3>
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900">
+                            @if($dashboardContext['personalization']['focus'] === 'strategic')
+                                Strategic Objectives
+                            @elseif($dashboardContext['personalization']['focus'] === 'team')
+                                Team & Personal Objectives
+                            @else
+                                My Objectives
+                            @endif
+                        </h3>
+                        <p class="text-sm text-gray-600 mt-1">
+                            @if($dashboardContext['personalization']['focus'] === 'strategic')
+                                Company-level objectives and your direct involvement
+                            @elseif($dashboardContext['personalization']['focus'] === 'team')
+                                Objectives you own, your team's goals, and direct reports' progress
+                            @else
+                                Objectives you own and are involved in
+                            @endif
+                        </p>
+                    </div>
                     <a href="{{ route('objectives.index') }}" class="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors duration-200">
                         View All
                         <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
