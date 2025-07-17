@@ -194,59 +194,59 @@
             @endif
 
             <!-- Dashboard Stats -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <div class="flex items-center">
-                        <div class="p-3 rounded-full bg-blue-100">
-                            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 mb-8">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 hover:shadow-md transition-all duration-200 mobile-stat-card">
+                    <div class="flex items-center space-x-4">
+                        <div class="p-3 rounded-full bg-blue-100 touch-target-sm flex-shrink-0">
+                            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                             </svg>
                         </div>
-                        <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-600">Total Objectives</p>
-                            <p class="text-2xl font-semibold text-gray-900">{{ $objectives->count() }}</p>
+                        <div>
+                            <p class="text-xs sm:text-sm font-medium text-gray-600">Total Objectives</p>
+                            <p class="text-lg sm:text-2xl font-semibold text-gray-900">{{ $objectives->count() }}</p>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <div class="flex items-center">
-                        <div class="p-3 rounded-full bg-green-100">
-                            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 hover:shadow-md transition-all duration-200 mobile-stat-card">
+                    <div class="flex items-center space-x-4">
+                        <div class="p-3 rounded-full bg-green-100 touch-target-sm flex-shrink-0">
+                            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
                         </div>
-                        <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-600">Completed</p>
-                            <p class="text-2xl font-semibold text-gray-900">{{ $objectives->where('progress', '>=', 100)->count() }}</p>
+                        <div>
+                            <p class="text-xs sm:text-sm font-medium text-gray-600">Completed</p>
+                            <p class="text-lg sm:text-2xl font-semibold text-gray-900">{{ $objectives->where('progress', '>=', 100)->count() }}</p>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <div class="flex items-center">
-                        <div class="p-3 rounded-full bg-purple-100">
-                            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 hover:shadow-md transition-all duration-200 mobile-stat-card">
+                    <div class="flex items-center space-x-4">
+                        <div class="p-3 rounded-full bg-purple-100 touch-target-sm flex-shrink-0">
+                            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                             </svg>
                         </div>
-                        <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-600">Active Tasks</p>
-                            <p class="text-2xl font-semibold text-gray-900">{{ $tasks->where('status', '!=', 'completed')->count() }}</p>
+                        <div>
+                            <p class="text-xs sm:text-sm font-medium text-gray-600">Active Tasks</p>
+                            <p class="text-lg sm:text-2xl font-semibold text-gray-900">{{ $tasks->where('status', '!=', 'completed')->count() }}</p>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <div class="flex items-center">
-                        <div class="p-3 rounded-full bg-yellow-100">
-                            <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 hover:shadow-md transition-all duration-200 mobile-stat-card">
+                    <div class="flex items-center space-x-4">
+                        <div class="p-3 rounded-full bg-yellow-100 touch-target-sm flex-shrink-0">
+                            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                             </svg>
                         </div>
-                        <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-600">Team Members</p>
-                            <p class="text-2xl font-semibold text-gray-900">{{ isset($users) ? $users->count() : 0 }}</p>
+                        <div>
+                            <p class="text-xs sm:text-sm font-medium text-gray-600">Team Members</p>
+                            <p class="text-lg sm:text-2xl font-semibold text-gray-900">{{ isset($users) ? $users->count() : 0 }}</p>
                         </div>
                     </div>
                 </div>
