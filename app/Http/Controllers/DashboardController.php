@@ -16,30 +16,184 @@ class DashboardController extends Controller
         $user = auth()->user();
         $companyId = $user->company_id;
 
-        $objectivesQuery = Objective::with(['user', 'keyResults.assignee'])
+        // Get relevant objectives based on user role and involvement
+        $objectivesQuery = $this->getRelevantObjectivesQuery($user, $companyId);
+        $objectives = $objectivesQuery->latest()->get();
+
+        // Get relevant tasks based on user role and involvement
+        $tasksQuery = $this->getRelevantTasksQuery($user, $companyId);
+        $tasks = $tasksQuery->latest()->get();
+
+        // Get relevant users for the current user's context
+        $users = $this->getRelevantUsers($user, $companyId);
+
+        // Add dashboard context for the view
+        $dashboardContext = $this->getDashboardContext($user, $objectives, $tasks);
+
+        return view('dashboard', compact('objectives', 'tasks', 'users', 'dashboardContext'));
+    }
+
+    /**
+     * Get objectives relevant to the current user based on their role and involvement
+     */
+    private function getRelevantObjectivesQuery($user, $companyId)
+    {
+        $objectivesQuery = Objective::with(['user', 'keyResults.assignee', 'team'])
             ->where('company_id', $companyId);
 
-        if (!$user->hasRole('super-admin')) {
+        if ($user->hasRole('super-admin')) {
+            // Super-admins see strategic overview: only company-level and their direct objectives
             $objectivesQuery->where(function ($query) use ($user) {
-                $query->where('user_id', $user->id)
+                $query->where('level', 'company')
+                    ->orWhere('user_id', $user->id)
                     ->orWhereHas('keyResults', function ($q) use ($user) {
                         $q->where('assignee_id', $user->id);
                     });
             });
+        } elseif ($user->hasRole('manager') || $user->hasRole('admin')) {
+            // Managers see: their objectives + their team's objectives + direct reports' objectives
+            $objectivesQuery->where(function ($query) use ($user) {
+                $query->where('user_id', $user->id) // Own objectives
+                    ->orWhere('team_id', $user->team_id) // Team objectives
+                    ->orWhereHas('user', function ($q) use ($user) {
+                        $q->where('manager_id', $user->id); // Direct reports' objectives
+                    })
+                    ->orWhereHas('keyResults', function ($q) use ($user) {
+                        $q->where('assignee_id', $user->id); // Assigned key results
+                    });
+            });
+        } else {
+            // Regular members see: their objectives + objectives they're involved in + team objectives
+            $objectivesQuery->where(function ($query) use ($user) {
+                $query->where('user_id', $user->id) // Own objectives
+                    ->orWhere('team_id', $user->team_id) // Team objectives (if part of a team)
+                    ->orWhereHas('keyResults', function ($q) use ($user) {
+                        $q->where('assignee_id', $user->id); // Assigned key results
+                    })
+                    ->orWhereHas('tasks', function ($q) use ($user) {
+                        $q->where('assignee_id', $user->id); // Assigned tasks
+                    });
+            });
         }
 
-        $objectives = $objectivesQuery->latest()->get();
+        return $objectivesQuery;
+    }
 
-        $tasks = Task::with(['creator', 'assignee', 'keyResult.objective'])
+    /**
+     * Get tasks relevant to the current user based on their role and involvement
+     */
+    private function getRelevantTasksQuery($user, $companyId)
+    {
+        $tasksQuery = Task::with(['creator', 'assignee', 'keyResult.objective'])
             ->whereHas('keyResult.objective', function ($query) use ($companyId) {
                 $query->where('company_id', $companyId);
-            })
-            ->latest()
-            ->get();
+            });
 
-        $users = User::where('company_id', $companyId)->get();
+        if ($user->hasRole('super-admin')) {
+            // Super-admins see overview of critical tasks only
+            $tasksQuery->where(function ($query) use ($user) {
+                $query->where('priority', 'high')
+                    ->orWhere('status', 'overdue')
+                    ->orWhere('assignee_id', $user->id)
+                    ->orWhere('creator_id', $user->id);
+            });
+        } elseif ($user->hasRole('manager') || $user->hasRole('admin')) {
+            // Managers see: their tasks + their team's tasks + direct reports' tasks
+            $tasksQuery->where(function ($query) use ($user) {
+                $query->where('assignee_id', $user->id) // Assigned to them
+                    ->orWhere('creator_id', $user->id) // Created by them
+                    ->orWhereHas('assignee', function ($q) use ($user) {
+                        $q->where('manager_id', $user->id) // Direct reports' tasks
+                            ->orWhere('team_id', $user->team_id); // Team members' tasks
+                    });
+            });
+        } else {
+            // Regular members see: their tasks + tasks they created
+            $tasksQuery->where(function ($query) use ($user) {
+                $query->where('assignee_id', $user->id) // Assigned to them
+                    ->orWhere('creator_id', $user->id); // Created by them
+            });
+        }
 
-        return view('dashboard', compact('objectives', 'tasks', 'users'));
+        return $tasksQuery;
+    }
+
+    /**
+     * Get users relevant to the current user's context
+     */
+    private function getRelevantUsers($user, $companyId)
+    {
+        if ($user->hasRole('super-admin')) {
+            // Super-admins see all company users
+            return User::where('company_id', $companyId)->get();
+        } elseif ($user->hasRole('manager') || $user->hasRole('admin')) {
+            // Managers see their team and direct reports
+            return User::where('company_id', $companyId)
+                ->where(function ($query) use ($user) {
+                    $query->where('team_id', $user->team_id)
+                        ->orWhere('manager_id', $user->id)
+                        ->orWhere('id', $user->id);
+                })
+                ->get();
+        } else {
+            // Regular members see their team members
+            return User::where('company_id', $companyId)
+                ->where(function ($query) use ($user) {
+                    $query->where('team_id', $user->team_id)
+                        ->orWhere('id', $user->id);
+                })
+                ->get();
+        }
+    }
+
+    /**
+     * Get dashboard context information for personalized display
+     */
+    private function getDashboardContext($user, $objectives, $tasks)
+    {
+        $context = [
+            'user_role' => $user->roles->first()->name ?? 'Member',
+            'user_role_slug' => $user->roles->first()->slug ?? 'member',
+            'personalization' => [],
+        ];
+
+        // Role-specific context
+        if ($user->hasRole('super-admin')) {
+            $context['personalization'] = [
+                'title' => 'Strategic Overview',
+                'description' => 'Company-level objectives and critical items requiring attention',
+                'focus' => 'strategic'
+            ];
+        } elseif ($user->hasRole('manager') || $user->hasRole('admin')) {
+            $teamSize = $user->team ? $user->team->users()->count() : 0;
+            $directReports = $user->directReports()->count();
+            
+            $context['personalization'] = [
+                'title' => 'Team Management Dashboard',
+                'description' => "Your objectives, team progress, and {$directReports} direct reports",
+                'focus' => 'team',
+                'stats' => [
+                    'team_size' => $teamSize,
+                    'direct_reports' => $directReports,
+                ]
+            ];
+        } else {
+            $context['personalization'] = [
+                'title' => 'My OKR Dashboard',
+                'description' => 'Your objectives, assigned tasks, and team progress',
+                'focus' => 'individual'
+            ];
+        }
+
+        // Add involvement statistics
+        $context['involvement'] = [
+            'owned_objectives' => $objectives->where('user_id', $user->id)->count(),
+            'assigned_key_results' => $objectives->flatMap->keyResults->where('assignee_id', $user->id)->count(),
+            'assigned_tasks' => $tasks->where('assignee_id', $user->id)->count(),
+            'overdue_tasks' => $tasks->where('assignee_id', $user->id)->where('status', 'overdue')->count(),
+        ];
+
+        return $context;
     }
 
     public function createObjective(Request $request)
